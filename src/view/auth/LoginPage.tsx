@@ -1,5 +1,5 @@
 import type { NavigateFn } from '@/lib/types'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
 
 export default function LoginPage({ navigate }: { navigate: NavigateFn }) {
   return (

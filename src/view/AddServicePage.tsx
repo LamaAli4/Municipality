@@ -1,7 +1,7 @@
 import type { NavigateFn } from '@/lib/types'
 import { ChevronLeftIcon, PlusIcon } from '@/lib/icons'
-import { PrimaryBtn } from '@/components/ui/Button'
-import { Input, Textarea } from '@/components/ui/Input'
+import { PrimaryBtn } from '@/components/ui/button'
+import { Input, Textarea } from '@/components/ui/input'
 
 export default function AddServicePage({ navigate }: { navigate: NavigateFn }) {
   return (

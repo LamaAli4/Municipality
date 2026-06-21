@@ -2,8 +2,8 @@ import { useState } from 'react'
 import Modal from '@/components/ui/Modal'
 import WarningBox from '@/components/ui/WarningBox'
 import RadioOption from '@/components/ui/RadioOption'
-import { BtnCancel, BtnConfirm } from '@/components/ui/Button'
-import { Input, Textarea } from '@/components/ui/Input'
+import { BtnCancel, BtnConfirm } from '@/components/ui/button'
+import { Input, Textarea } from '@/components/ui/input'
 import { DisableUserIcon, LogsIcon } from '@/lib/icons'
 
 const info = [

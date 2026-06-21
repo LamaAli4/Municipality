@@ -1,5 +1,5 @@
 import Modal from '@/components/ui/Modal'
-import { BtnCancel, BtnConfirm } from '@/components/ui/Button'
+import { BtnCancel, BtnConfirm } from '@/components/ui/button'
 import { TrashIcon } from '@/lib/icons'
 
 interface DeleteModalProps {

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { EmployeeNavigateFn } from '@/lib/types'
 import { ChevronLeftIcon, ApproveIcon, RefuseIcon, RequestDocsIcon, TransferIcon, WarningIcon } from '@/lib/icons'
 import Modal from '@/components/ui/Modal'
-import { BtnCancel, BtnConfirm } from '@/components/ui/Button'
+import { BtnCancel, BtnConfirm } from '@/components/ui/button'
 
 interface Props { navigate: EmployeeNavigateFn }
 

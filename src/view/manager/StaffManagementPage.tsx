@@ -4,8 +4,8 @@ import { SearchBar } from '@/components/ui/SearchBar'
 import StatCard from '@/components/ui/StatCard'
 import { EditIcon, TrashIcon, AddUserIcon, StaffIcon } from '@/lib/icons'
 import Modal from '@/components/ui/Modal'
-import { BtnCancel, BtnConfirm } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { BtnCancel, BtnConfirm } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 const employees = [
   { id: 1, name: 'Ali Hassan', section: 'Water Section', status: 'Active' as const, tasks: 3 },

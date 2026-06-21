@@ -1,8 +1,8 @@
 import Modal from '@/components/ui/Modal'
 import InfoCard from '@/components/ui/InfoCard'
 import WarningBox from '@/components/ui/WarningBox'
-import { BtnCancel, BtnConfirm } from '@/components/ui/Button'
-import { Textarea } from '@/components/ui/Input'
+import { BtnCancel, BtnConfirm } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/input'
 import { DisableUserIcon } from '@/lib/icons'
 
 const fields: [string, string][] = [

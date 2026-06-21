@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { SearchBar } from '@/components/ui/SearchBar'
 import { EditIcon, TrashIcon, PlusIcon } from '@/lib/icons'
 import Modal from '@/components/ui/Modal'
-import { BtnCancel, BtnConfirm } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { BtnCancel, BtnConfirm } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 const sections = [
   { id: 1, name: 'Water Supply Section', employees: 8, services: 3 },

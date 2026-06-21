@@ -3,7 +3,7 @@ import type { NavigateFn } from '@/lib/types'
 import { departments } from '@/lib/data'
 import { SearchIcon, PlusIcon, EyeIcon, TrashIcon } from '@/lib/icons'
 import SectionHeader from '@/components/ui/SectionHeader'
-import { PrimaryBtn } from '@/components/ui/Button'
+import { PrimaryBtn } from '@/components/ui/button'
 import AddDepartmentModal from './modals/AddDepartmentModal'
 import DeleteModal from './modals/DeleteModal'
 

@@ -1,10 +1,29 @@
-import type { ReactNode } from 'react'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { Slot } from 'radix-ui'
+import { cn } from '@/lib/utils'
 
 interface BtnProps {
   onClick?: () => void
   label?: string
   icon?: ReactNode
   className?: string
+}
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  asChild?: boolean
+}
+
+export function Button({ className, asChild = false, ...props }: ButtonProps) {
+  const Comp = asChild ? Slot.Root : 'button'
+  return (
+    <Comp
+      className={cn(
+        'inline-flex items-center justify-center font-semibold rounded-xl px-5 py-2.5 transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-50',
+        className,
+      )}
+      {...props}
+    />
+  )
 }
 
 export function BtnCancel({ onClick, label = 'Cancel' }: BtnProps) {

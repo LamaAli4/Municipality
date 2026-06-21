@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { PasswordIcon, LogoutIcon, ChevronDownIcon, EditIcon } from '@/lib/icons'
 import SectionHeader from '@/components/ui/SectionHeader'
-import { Input } from '@/components/ui/Input'
-import { PrimaryBtn } from '@/components/ui/Button'
+import { Input } from '@/components/ui/input'
+import { PrimaryBtn } from '@/components/ui/button'
 
 export default function AccountPage() {
   const [showPassword, setShowPassword] = useState(false)
