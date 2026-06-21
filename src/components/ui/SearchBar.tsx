@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { SearchIcon, FilterIcon } from '../../lib/icons'
+import { SearchIcon, FilterIcon } from '@/lib/icons'
 
 interface SearchBarProps {
   placeholder: string

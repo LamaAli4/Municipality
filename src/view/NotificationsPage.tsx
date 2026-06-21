@@ -1,5 +1,5 @@
-import { LogsIcon, CheckIcon } from '../lib/icons'
-import SectionHeader from '../components/ui/SectionHeader'
+import { LogsIcon, CheckIcon } from '@/lib/icons'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 export default function NotificationsPage() {
   return (

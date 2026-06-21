@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import type { NavigateFn } from '../lib/types'
-import { ChevronLeftIcon, ChevronRightIcon, LogsIcon, ServiceIcon, CheckIcon, ImagePlaceholderIcon } from '../lib/icons'
-import Badge from '../components/ui/Badge'
+import type { NavigateFn } from '@/lib/types'
+import { ChevronLeftIcon, ChevronRightIcon, LogsIcon, ServiceIcon, CheckIcon, ImagePlaceholderIcon } from '@/lib/icons'
+import Badge from '@/components/ui/Badge'
 import DisableCitizenModal from './modals/DisableCitizenModal'
 
 const personalFields: [string, string][] = [

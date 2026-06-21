@@ -1,7 +1,7 @@
-import Modal from '../../components/ui/Modal'
-import { BtnCancel, BtnConfirm } from '../../components/ui/Button'
-import { Input } from '../../components/ui/Input'
-import { EditIcon, SaveIcon } from '../../lib/icons'
+import Modal from '@/components/ui/Modal'
+import { BtnCancel, BtnConfirm } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { EditIcon, SaveIcon } from '@/lib/icons'
 
 export default function EditSectionModal({ onClose }: { onClose: () => void }) {
   return (

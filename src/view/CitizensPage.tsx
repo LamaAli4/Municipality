@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import type { NavigateFn } from '../lib/types'
-import { citizens } from '../lib/data'
-import { CitizensIcon, EyeIcon, TrashIcon } from '../lib/icons'
-import StatCard from '../components/ui/StatCard'
-import Badge from '../components/ui/Badge'
-import { SearchBar, FilterBtn } from '../components/ui/SearchBar'
-import Pagination from '../components/ui/Pagination'
-import SectionHeader from '../components/ui/SectionHeader'
+import type { NavigateFn } from '@/lib/types'
+import { citizens } from '@/lib/data'
+import { CitizensIcon, EyeIcon, TrashIcon } from '@/lib/icons'
+import StatCard from '@/components/ui/StatCard'
+import Badge from '@/components/ui/Badge'
+import { SearchBar, FilterBtn } from '@/components/ui/SearchBar'
+import Pagination from '@/components/ui/Pagination'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
   const [search, setSearch] = useState('')

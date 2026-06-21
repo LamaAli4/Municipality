@@ -1,6 +1,6 @@
-import type { EmployeePage, EmployeeNavigateFn } from '../lib/types'
-import { KanbanIcon, BellIcon, AccountIcon, ChevronRightIcon } from '../lib/icons'
-import Logo from '../assets/logo.png'
+import type { EmployeePage, EmployeeNavigateFn } from '@/lib/types'
+import { KanbanIcon, BellIcon, AccountIcon, ChevronRightIcon } from '@/lib/icons'
+import Logo from '@/assets/logo.png'
 
 interface Props {
   current: EmployeePage

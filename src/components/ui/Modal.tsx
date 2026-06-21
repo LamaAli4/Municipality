@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { CloseIcon } from '../../lib/icons'
+import { CloseIcon } from '@/lib/icons'
 
 interface ModalProps {
   title: string

@@ -1,4 +1,4 @@
-import type { EmployeeNavigateFn } from '../../lib/types'
+import type { EmployeeNavigateFn } from '@/lib/types'
 
 interface Props { navigate: EmployeeNavigateFn }
 

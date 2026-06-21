@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import type { NavigateFn } from '../lib/types'
-import { services } from '../lib/data'
-import { PlusIcon, EditIcon, TrashIcon } from '../lib/icons'
-import SectionHeader from '../components/ui/SectionHeader'
-import { PrimaryBtn } from '../components/ui/Button'
-import { SearchBar, FilterBtn } from '../components/ui/SearchBar'
-import Pagination from '../components/ui/Pagination'
+import type { NavigateFn } from '@/lib/types'
+import { services } from '@/lib/data'
+import { PlusIcon, EditIcon, TrashIcon } from '@/lib/icons'
+import SectionHeader from '@/components/ui/SectionHeader'
+import { PrimaryBtn } from '@/components/ui/Button'
+import { SearchBar, FilterBtn } from '@/components/ui/SearchBar'
+import Pagination from '@/components/ui/Pagination'
 
 export default function ServicePage({ navigate }: { navigate: NavigateFn }) {
   const [search, setSearch] = useState('')

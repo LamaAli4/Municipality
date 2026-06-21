@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import type { AuthPage } from '../../lib/types'
-import Logo from '../../assets/logo.png'
+import type { AuthPage } from '@/lib/types'
+import Logo from '@/assets/logo.png'
 
 interface Props { navigate: (page: AuthPage) => void }
 

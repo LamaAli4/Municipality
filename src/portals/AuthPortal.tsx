@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import type { Role, AuthPage } from '../lib/types'
-import SignInPage from '../view/auth/SignInPage'
-import CreateAccountPage from '../view/auth/CreateAccountPage'
-import ForgotPasswordPage from '../view/auth/ForgotPasswordPage'
-import OTPPage from '../view/auth/OTPPage'
-import ResetPasswordPage from '../view/auth/ResetPasswordPage'
+import type { Role, AuthPage } from '@/lib/types'
+import SignInPage from '@/view/auth/SignInPage'
+import CreateAccountPage from '@/view/auth/CreateAccountPage'
+import ForgotPasswordPage from '@/view/auth/ForgotPasswordPage'
+import OTPPage from '@/view/auth/OTPPage'
+import ResetPasswordPage from '@/view/auth/ResetPasswordPage'
 
 interface Props {
   onLogin: (role: Role) => void

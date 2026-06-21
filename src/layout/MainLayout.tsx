@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { Page, NavigateFn } from '../lib/types'
+import type { Page, NavigateFn } from '@/lib/types'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 

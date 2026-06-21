@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import type { EmployeePage } from '../lib/types'
-import EmployeeLayout from '../layout/EmployeeLayout'
-import TaskBoardPage from '../view/employee/TaskBoardPage'
-import TaskDetailPage from '../view/employee/TaskDetailPage'
-import EmployeeNotificationsPage from '../view/employee/NotificationsPage'
-import EmployeeAccountPage from '../view/employee/AccountPage'
+import type { EmployeePage } from '@/lib/types'
+import EmployeeLayout from '@/layout/EmployeeLayout'
+import TaskBoardPage from '@/view/employee/TaskBoardPage'
+import TaskDetailPage from '@/view/employee/TaskDetailPage'
+import EmployeeNotificationsPage from '@/view/employee/NotificationsPage'
+import EmployeeAccountPage from '@/view/employee/AccountPage'
 
 interface Props { onLogout: () => void }
 

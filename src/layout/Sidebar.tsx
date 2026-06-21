@@ -1,9 +1,9 @@
-import type { Page, NavigateFn } from '../lib/types'
+import type { Page, NavigateFn } from '@/lib/types'
 import {
   DashboardIcon, CitizensIcon, StaffIcon, DepartmentIcon,
   ServiceIcon, LogsIcon, BellIcon, AccountIcon, ChevronRightIcon,
-} from '../lib/icons'
-import Logo from '../assets/logo.png'
+} from '@/lib/icons'
+import Logo from '@/assets/logo.png'
 
 const navItems = [
   { key: 'dashboard'  as Page, label: 'Control panel',      Icon: DashboardIcon  },

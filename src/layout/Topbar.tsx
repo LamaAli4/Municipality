@@ -1,4 +1,4 @@
-import { BellIcon } from '../lib/icons'
+import { BellIcon } from '@/lib/icons'
 
 interface Props { onLogout?: () => void }
 

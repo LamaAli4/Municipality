@@ -1,4 +1,4 @@
-import OtpForm from "../components/otp-form";
+import OtpForm from "@/view/auth/components/otp-form";
 
 
 export default function Otp() {

@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import type { NavigateFn } from '../lib/types'
-import { latestRequests, awaitingVerification } from '../lib/data'
-import { CitizensIcon, StaffIcon, LogsIcon, ServiceIcon, ChevronRightIcon } from '../lib/icons'
-import StatCard from '../components/ui/StatCard'
-import Badge from '../components/ui/Badge'
-import SectionHeader from '../components/ui/SectionHeader'
+import type { NavigateFn } from '@/lib/types'
+import { latestRequests, awaitingVerification } from '@/lib/data'
+import { CitizensIcon, StaffIcon, LogsIcon, ServiceIcon, ChevronRightIcon } from '@/lib/icons'
+import StatCard from '@/components/ui/StatCard'
+import Badge from '@/components/ui/Badge'
+import SectionHeader from '@/components/ui/SectionHeader'
 import CitizenVerificationModal from './modals/CitizenVerificationModal'
 
 export default function DashboardPage({ navigate }: { navigate: NavigateFn }) {

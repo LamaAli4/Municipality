@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import type { CitizenNavigateFn } from '../../lib/types'
-import { ChevronLeftIcon, UploadIcon, ArrowRightIcon } from '../../lib/icons'
+import type { CitizenNavigateFn } from '@/lib/types'
+import { ChevronLeftIcon, UploadIcon, ArrowRightIcon } from '@/lib/icons'
 
 interface Props { navigate: CitizenNavigateFn }
 

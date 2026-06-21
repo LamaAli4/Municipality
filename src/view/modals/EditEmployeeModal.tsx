@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import Modal from '../../components/ui/Modal'
-import RadioOption from '../../components/ui/RadioOption'
-import WarningBox from '../../components/ui/WarningBox'
-import { BtnCancel, BtnConfirm } from '../../components/ui/Button'
-import { Input } from '../../components/ui/Input'
-import { EditIcon, SaveIcon } from '../../lib/icons'
+import Modal from '@/components/ui/Modal'
+import RadioOption from '@/components/ui/RadioOption'
+import WarningBox from '@/components/ui/WarningBox'
+import { BtnCancel, BtnConfirm } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { EditIcon, SaveIcon } from '@/lib/icons'
 
 export default function EditEmployeeModal({ onClose }: { onClose: () => void }) {
   const [role, setRole] = useState<'employee' | 'manager'>('employee')

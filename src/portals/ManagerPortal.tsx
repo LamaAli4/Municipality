@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import type { ManagerPage } from '../lib/types'
-import ManagerLayout from '../layout/ManagerLayout'
-import StaffManagementPage from '../view/manager/StaffManagementPage'
-import DepartmentManagementPage from '../view/manager/DepartmentManagementPage'
-import PerformancePanelPage from '../view/manager/PerformancePanelPage'
-import ManagerNotificationsPage from '../view/manager/NotificationsPage'
-import ManagerAccountPage from '../view/manager/AccountPage'
+import type { ManagerPage } from '@/lib/types'
+import ManagerLayout from '@/layout/ManagerLayout'
+import StaffManagementPage from '@/view/manager/StaffManagementPage'
+import DepartmentManagementPage from '@/view/manager/DepartmentManagementPage'
+import PerformancePanelPage from '@/view/manager/PerformancePanelPage'
+import ManagerNotificationsPage from '@/view/manager/NotificationsPage'
+import ManagerAccountPage from '@/view/manager/AccountPage'
 
 interface Props { onLogout: () => void }
 

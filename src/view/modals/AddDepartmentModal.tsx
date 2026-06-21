@@ -1,8 +1,8 @@
-import Modal from '../../components/ui/Modal'
-import WarningBox from '../../components/ui/WarningBox'
-import { BtnCancel, BtnConfirm } from '../../components/ui/Button'
-import { Input, Textarea } from '../../components/ui/Input'
-import { EditIcon, SaveIcon } from '../../lib/icons'
+import Modal from '@/components/ui/Modal'
+import WarningBox from '@/components/ui/WarningBox'
+import { BtnCancel, BtnConfirm } from '@/components/ui/Button'
+import { Input, Textarea } from '@/components/ui/Input'
+import { EditIcon, SaveIcon } from '@/lib/icons'
 
 export default function AddDepartmentModal({ onClose }: { onClose: () => void }) {
   return (

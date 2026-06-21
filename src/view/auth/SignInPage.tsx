@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import type { Role } from '../../lib/types'
-import type { AuthPage } from '../../lib/types'
-import Logo from '../../assets/logo.png'
+import type { Role } from '@/lib/types'
+import type { AuthPage } from '@/lib/types'
+import Logo from '@/assets/logo.png'
 
 interface Props {
   onLogin: (role: Role) => void

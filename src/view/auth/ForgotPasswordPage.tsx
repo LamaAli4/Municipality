@@ -1,4 +1,4 @@
-import type { AuthPage } from '../../lib/types'
+import type { AuthPage } from '@/lib/types'
 
 interface Props { navigate: (page: AuthPage) => void }
 

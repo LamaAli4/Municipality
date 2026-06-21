@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { CitizenNavigateFn } from '../../lib/types'
+import type { CitizenNavigateFn } from '@/lib/types'
 
 interface Props { navigate: CitizenNavigateFn }
 

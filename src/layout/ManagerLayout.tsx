@@ -1,6 +1,6 @@
-import type { ManagerPage, ManagerNavigateFn } from '../lib/types'
-import { StaffIcon, DepartmentIcon, PerformanceIcon, BellIcon, AccountIcon, ChevronRightIcon } from '../lib/icons'
-import Logo from '../assets/logo.png'
+import type { ManagerPage, ManagerNavigateFn } from '@/lib/types'
+import { StaffIcon, DepartmentIcon, PerformanceIcon, BellIcon, AccountIcon, ChevronRightIcon } from '@/lib/icons'
+import Logo from '@/assets/logo.png'
 
 interface Props {
   current: ManagerPage

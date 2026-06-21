@@ -1,4 +1,4 @@
-import { WarningIcon } from '../../lib/icons'
+import { WarningIcon } from '@/lib/icons'
 
 export default function WarningBox({ text }: { text: string }) {
   return (

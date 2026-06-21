@@ -1,4 +1,4 @@
-import type { CitizenPage, CitizenNavigateFn } from "../lib/types";
+import type { CitizenPage, CitizenNavigateFn } from "@/lib/types";
 import {
   HomeIcon,
   ServiceIcon,
@@ -9,8 +9,8 @@ import {
   BellIcon,
   AccountIcon,
   ChevronRightIcon,
-} from "../lib/icons";
-import Logo from "../assets/logo.png";
+} from "@/lib/icons";
+import Logo from "@/assets/logo.png";
 
 interface Props {
   current: CitizenPage;

@@ -1,9 +1,9 @@
-import Modal from '../../components/ui/Modal'
-import InfoCard from '../../components/ui/InfoCard'
-import WarningBox from '../../components/ui/WarningBox'
-import { BtnCancel, BtnConfirm } from '../../components/ui/Button'
-import { Textarea } from '../../components/ui/Input'
-import { DisableUserIcon } from '../../lib/icons'
+import Modal from '@/components/ui/Modal'
+import InfoCard from '@/components/ui/InfoCard'
+import WarningBox from '@/components/ui/WarningBox'
+import { BtnCancel, BtnConfirm } from '@/components/ui/Button'
+import { Textarea } from '@/components/ui/Input'
+import { DisableUserIcon } from '@/lib/icons'
 
 const fields: [string, string][] = [
   ['Full name',       'Ahmed Ali'   ],

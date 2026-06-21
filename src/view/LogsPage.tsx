@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { logs } from '../lib/data'
-import { LogsIcon, CitizensIcon, RefreshIcon, DownloadIcon } from '../lib/icons'
-import StatCard from '../components/ui/StatCard'
-import Badge from '../components/ui/Badge'
-import { SearchBar, FilterBtn } from '../components/ui/SearchBar'
-import Pagination from '../components/ui/Pagination'
-import SectionHeader from '../components/ui/SectionHeader'
+import { logs } from '@/lib/data'
+import { LogsIcon, CitizensIcon, RefreshIcon, DownloadIcon } from '@/lib/icons'
+import StatCard from '@/components/ui/StatCard'
+import Badge from '@/components/ui/Badge'
+import { SearchBar, FilterBtn } from '@/components/ui/SearchBar'
+import Pagination from '@/components/ui/Pagination'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 export default function LogsPage() {
   const [search, setSearch] = useState('')
