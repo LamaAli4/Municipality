@@ -1,11 +1,40 @@
 import { useState } from 'react'
-import type { AuthPage } from '../../lib/types'
-import Logo from '../../assets/logo.png'
+import { AuthPage } from '@/lib/types'
+import Logo from '@/assets/logo.png'
+import { useSignUp } from '@/services/authService'
+import { signUpSchema } from '@/schemas/authSchema'
 
 interface Props { navigate: (page: AuthPage) => void }
 
 export default function CreateAccountPage({ navigate }: Props) {
   const [showConfirm, setShowConfirm] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    idNumber: '',
+    phone: '',
+    governorate: '',
+  })
+  const [error, setError] = useState('')
+
+  const signUp = useSignUp()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    try {
+      const validatedData = signUpSchema.parse(formData)
+      await signUp.mutateAsync(validatedData)
+      setShowConfirm(true)
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message)
+      }
+    }
+  }
 
   if (showConfirm) {
     return (
@@ -31,7 +60,7 @@ export default function CreateAccountPage({ navigate }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-white px-8 py-10">
+    <form onSubmit={handleSubmit} className="min-h-screen flex flex-col items-center justify-start bg-white px-8 py-10">
       {/* Logo + brand */}
       <img src={Logo} alt="" />
       <h1 className="mt-3 text-2xl font-bold">
@@ -41,15 +70,21 @@ export default function CreateAccountPage({ navigate }: Props) {
 
       {/* Form */}
       <div className="mt-10 w-full max-w-3xl">
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-x-10 gap-y-5">
           {/* Left column */}
-          <Field label="Username" />
-          <Field label="Governorate" />
+          <Field label="Username" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+          <Field label="Governorate" value={formData.governorate} onChange={(e) => setFormData({...formData, governorate: e.target.value})} />
 
-          <Field label="ID Number" />
-          <Field label="password" type="password" />
+          <Field label="ID Number" value={formData.idNumber} onChange={(e) => setFormData({...formData, idNumber: e.target.value})} />
+          <Field label="Password" type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} />
 
-          <Field label="Email" type="email" />
+          <Field label="Email" type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+          <Field label="Confirm Password" type="password" value={formData.confirmPassword} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} />
 
           {/* Upload — spans remaining rows on the right */}
           <div className="row-span-2">
@@ -65,30 +100,33 @@ export default function CreateAccountPage({ navigate }: Props) {
             </div>
           </div>
 
-          <Field label="Phone Number" type="tel" />
+          <Field label="Phone Number" type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
         </div>
 
         {/* Next button — right-aligned to match design */}
         <div className="flex justify-end mt-8">
           <button
-            onClick={() => setShowConfirm(true)}
-            className="px-24 py-3 rounded-lg text-white text-base font-semibold"
+            type="submit"
+            disabled={signUp.isPending}
+            className="px-24 py-3 rounded-lg text-white text-base font-semibold disabled:opacity-50"
             style={{ background: 'linear-gradient(135deg, #0d9488, #0a7569)' }}
           >
-            Next
+            {signUp.isPending ? 'Creating...' : 'Next'}
           </button>
         </div>
       </div>
-    </div>
+    </form>
   )
 }
 
-function Field({ label, type = 'text' }: { label: string; type?: string }) {
+function Field({ label, type = 'text', value, onChange }: { label: string; type?: string; value?: string; onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
   return (
     <div>
       <label className="text-sm text-gray-500 block mb-1">{label}</label>
       <input
         type={type}
+        value={value}
+        onChange={onChange}
         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
       />
     </div>

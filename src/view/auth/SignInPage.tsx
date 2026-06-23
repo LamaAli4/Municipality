@@ -1,17 +1,59 @@
 import { useState } from 'react'
-import type { Role } from '../../lib/types'
-import type { AuthPage } from '../../lib/types'
-import Logo from '../../assets/logo.png'
+import type { Role } from '@/lib/types'
+import type { AuthPage } from '@/lib/types'
+import Logo from '@/assets/logo.png'
+import { useSignIn } from '@/services/authService'
+import { signInSchema } from '@/schemas/authSchema'
+import { toast } from 'react-toastify'
+import { ZodError } from 'zod'
 
 interface Props {
-  onLogin: (role: Role) => void
   navigate: (page: AuthPage) => void
 }
 
-export default function SignInPage({ onLogin, navigate }: Props) {
-  const [email, setEmail] = useState('')
+export default function SignInPage({ navigate }: Props) {
+  const [selectedRole, setSelectedRole] = useState<Role>('citizen')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
+
+  const signIn = useSignIn()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    try {
+      const validatedData = signInSchema.parse({ identifier, password, role: selectedRole })
+
+      // Additional validation for citizen: must be exactly 9 digits
+      if (selectedRole === 'citizen' && !/^\d{9}$/.test(identifier)) {
+        toast.error('National ID must be exactly 9 digits')
+        return
+      }
+
+      await signIn.mutateAsync(validatedData)
+      // Auth is handled by authStore automatically
+    } catch (err) {
+      if (err instanceof ZodError) {
+        toast.error(err.issues[0].message)
+      } else if (err instanceof Error) {
+        toast.error(err.message)
+      }
+    }
+  }
+
+  const getIdentifierLabel = () => {
+    switch (selectedRole) {
+      case 'citizen':
+        return 'National ID'
+      case 'admin':
+      case 'manager':
+      case 'employee':
+        return 'Employee ID'
+      default:
+        return 'National ID / Employee ID'
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">
@@ -21,13 +63,26 @@ export default function SignInPage({ onLogin, navigate }: Props) {
         <span className="text-gray-900">Amar</span>
       </h1>
 
-      <div className="mt-10 w-full max-w-sm space-y-4">
+      <form onSubmit={handleSubmit} className="mt-10 w-full max-w-sm space-y-4">
         <div>
-          <label className="text-sm text-gray-600">Email</label>
+          <label className="text-sm text-gray-600 mb-1 block">User Type</label>
+          <select
+            value={selectedRole}
+            onChange={e => setSelectedRole(e.target.value as Role)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+          >
+            <option value="citizen">Citizen</option>
+            <option value="admin">System Admin</option>
+            <option value="manager">Department Manager</option>
+            <option value="employee">Employee</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-sm text-gray-600">{getIdentifierLabel()}</label>
           <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
+            type="text"
+            value={identifier}
+            onChange={e => setIdentifier(e.target.value)}
             className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
@@ -50,41 +105,26 @@ export default function SignInPage({ onLogin, navigate }: Props) {
           </div>
         </div>
         <div className="text-right">
-          <button onClick={() => navigate('forgot-password')} className="text-sm text-gray-500 hover:text-teal-600 underline font-medium">
+          <button type="button" onClick={() => navigate('forgot-password')} className="text-sm text-gray-500 hover:text-teal-600 underline font-medium">
             Forget password?
           </button>
         </div>
         <button
-          onClick={() => onLogin('citizen')}
-          className="w-full py-3 rounded-lg text-white text-sm font-semibold"
+          type="submit"
+          disabled={signIn.isPending}
+          className="w-full py-3 rounded-lg text-white text-sm font-semibold disabled:opacity-50"
           style={{ background: 'linear-gradient(135deg, #0d9488, #0a7569)' }}
         >
-          Sign in
+          {signIn.isPending ? 'Signing in...' : 'Sign in'}
         </button>
 
         <p className="text-center text-sm text-gray-500">
           Don't have an account?{' '}
-          <button onClick={() => navigate('create-account')} className="text-teal-600 font-medium hover:underline">
+          <button type="button" onClick={() => navigate('create-account')} className="text-teal-600 font-medium hover:underline">
             Create an account
           </button>
         </p>
-      </div>
-
-      {/* Demo role buttons */}
-      <div className="mt-12 w-full max-w-sm">
-        <p className="text-xs text-center text-gray-400 mb-3">— Demo: choose portal —</p>
-        <div className="grid grid-cols-2 gap-2">
-          {(['admin', 'citizen', 'manager', 'employee'] as Role[]).map(role => (
-            <button
-              key={role}
-              onClick={() => onLogin(role)}
-              className="py-2 px-3 rounded-lg border border-teal-200 text-teal-700 text-xs font-medium hover:bg-teal-50 capitalize"
-            >
-              {role === 'manager' ? 'Dept. Manager' : role.charAt(0).toUpperCase() + role.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
+      </form>
     </div>
   )
 }

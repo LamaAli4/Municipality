@@ -1,17 +1,79 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import type { Role } from './lib/types'
 import AuthPortal from './portals/AuthPortal'
 import AdminPortal from './portals/AdminPortal'
 import CitizenPortal from './portals/CitizenPortal'
 import ManagerPortal from './portals/ManagerPortal'
 import EmployeePortal from './portals/EmployeePortal'
+import { useAuthStore } from './store/authStore'
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuthStore()
+  const location = useLocation()
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  return <>{children}</>
+}
+
+function AppContent() {
+  const { user, isAuthenticated, logout, isLoading, initializeAuth } = useAuthStore()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
+
+  useEffect(() => {
+    initializeAuth()
+  }, [initializeAuth])
+
+  // Redirect authenticated users to their dashboard
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const role = user.role.toLowerCase() as Role
+      const currentPath = location.pathname
+      if (currentPath === '/login') {
+        if (role === 'admin') navigate('/admin', { replace: true })
+        else if (role === 'citizen') navigate('/citizen', { replace: true })
+        else if (role === 'manager') navigate('/manager', { replace: true })
+        else navigate('/employee', { replace: true })
+      } else if (role === 'admin' && currentPath !== '/admin') navigate('/admin', { replace: true })
+      else if (role === 'citizen' && currentPath !== '/citizen') navigate('/citizen', { replace: true })
+      else if (role === 'manager' && currentPath !== '/manager') navigate('/manager', { replace: true })
+      else if (role === 'employee' && currentPath !== '/employee') navigate('/employee', { replace: true })
+    }
+  }, [isAuthenticated, user, navigate, location.pathname])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-teal-600 text-lg">Loading...</div>
+      </div>
+    )
+  }
+
+  return (
+    <Routes>
+      <Route path="/login" element={<AuthPortal />} />
+      <Route path="/admin" element={<ProtectedRoute><AdminPortal onLogout={handleLogout} /></ProtectedRoute>} />
+      <Route path="/citizen" element={<ProtectedRoute><CitizenPortal onLogout={handleLogout} /></ProtectedRoute>} />
+      <Route path="/manager" element={<ProtectedRoute><ManagerPortal onLogout={handleLogout} /></ProtectedRoute>} />
+      <Route path="/employee" element={<ProtectedRoute><EmployeePortal onLogout={handleLogout} /></ProtectedRoute>} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
+    </Routes>
+  )
+}
 
 export default function App() {
-  const [role, setRole] = useState<Role | null>(null)
-
-  if (!role)              return <AuthPortal onLogin={setRole} />
-  if (role === 'admin')   return <AdminPortal onLogout={() => setRole(null)} />
-  if (role === 'citizen') return <CitizenPortal onLogout={() => setRole(null)} />
-  if (role === 'manager') return <ManagerPortal onLogout={() => setRole(null)} />
-  return                         <EmployeePortal onLogout={() => setRole(null)} />
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  )
 }

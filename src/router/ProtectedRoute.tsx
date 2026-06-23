@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { ROUTES } from "@/router/routes";
+import { ROUTES } from "./routes";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem("token");
