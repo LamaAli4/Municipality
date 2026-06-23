@@ -1,34 +1,73 @@
-import type { AuthPage } from '../../lib/types'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
+import Logo from '@/assets/logo.png'
+import type { AuthPage } from '@/lib/types'
+import { useForgotPassword } from '@/services/authService'
 
 interface Props { navigate: (page: AuthPage) => void }
 
 export default function ForgotPasswordPage({ navigate }: Props) {
+  const [identifier, setIdentifier] = useState('')
+  const routerNav = useNavigate()
+  const forgotPassword = useForgotPassword()
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!identifier.trim()) {
+      toast.error('Please enter your National ID, phone number, or Employee ID')
+      return
+    }
+    forgotPassword.mutate({ identifier }, {
+      onSuccess: () => {
+        toast.success('OTP sent! Check your registered phone or email.')
+        routerNav('/otp', { state: { identifier } })
+      },
+    })
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">Forgot Password</h2>
-      <p className="text-sm text-gray-500 mb-8 text-center max-w-xs">
-        Enter your email address and we'll send you a code to reset your password.
-      </p>
+      <img src={Logo} alt="" />
+      <h1 className="mt-3 text-2xl font-bold">
+        <span className="text-teal-600">Thecnho </span>
+        <span className="text-gray-900">Amar</span>
+      </h1>
 
-      <div className="w-full max-w-sm space-y-4">
-        <div>
-          <label className="text-sm text-gray-600">Email</label>
-          <input
-            type="email"
-            className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-          />
-        </div>
-        <button
-          onClick={() => navigate('otp')}
-          className="w-full py-3 rounded-lg text-white text-sm font-semibold"
-          style={{ background: 'linear-gradient(135deg, #0d9488, #0a7569)' }}
-        >
-          Send code
-        </button>
-        <p className="text-center text-sm text-gray-500">
-          Remember your password?{' '}
-          <button onClick={() => navigate('signin')} className="text-teal-600 font-medium hover:underline">Sign in</button>
+      <div className="mt-10 w-full max-w-sm">
+        <h2 className="text-xl font-bold text-gray-800 mb-1">Forgot Password</h2>
+        <p className="text-sm text-gray-500 mb-6">
+          Enter your National ID, phone number, or Employee ID and we'll send you a one-time code.
         </p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-sm text-gray-600 block mb-1">National ID / Phone / Employee ID</label>
+            <input
+              type="text"
+              value={identifier}
+              onChange={e => setIdentifier(e.target.value)}
+              placeholder="e.g. 123456789"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={forgotPassword.isPending}
+            className="w-full py-3 rounded-lg text-white text-sm font-semibold disabled:opacity-60"
+            style={{ background: 'linear-gradient(135deg, #0d9488, #0a7569)' }}
+          >
+            {forgotPassword.isPending ? 'Sending...' : 'Send OTP'}
+          </button>
+
+          <p className="text-center text-sm text-gray-500">
+            Remember your password?{' '}
+            <button type="button" onClick={() => navigate('signin')} className="text-teal-600 font-medium hover:underline">
+              Sign in
+            </button>
+          </p>
+        </form>
       </div>
     </div>
   )

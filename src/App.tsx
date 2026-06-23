@@ -38,7 +38,8 @@ function AppContent() {
     if (isAuthenticated && user) {
       const role = user.role.toLowerCase() as Role
       const currentPath = location.pathname
-      if (currentPath === '/login') {
+      const authPaths = ['/login', '/register', '/forgot-password', '/otp', '/reset-password']
+      if (authPaths.includes(currentPath)) {
         if (role === 'admin') navigate('/admin', { replace: true })
         else if (role === 'citizen') navigate('/citizen', { replace: true })
         else if (role === 'manager') navigate('/manager', { replace: true })
@@ -61,6 +62,10 @@ function AppContent() {
   return (
     <Routes>
       <Route path="/login" element={<AuthPortal />} />
+      <Route path="/register" element={<AuthPortal />} />
+      <Route path="/forgot-password" element={<AuthPortal />} />
+      <Route path="/otp" element={<AuthPortal />} />
+      <Route path="/reset-password" element={<AuthPortal />} />
       <Route path="/admin" element={<ProtectedRoute><AdminPortal onLogout={handleLogout} /></ProtectedRoute>} />
       <Route path="/citizen" element={<ProtectedRoute><CitizenPortal onLogout={handleLogout} /></ProtectedRoute>} />
       <Route path="/manager" element={<ProtectedRoute><ManagerPortal onLogout={handleLogout} /></ProtectedRoute>} />

@@ -1,8 +1,29 @@
 import axiosInstance from '@/lib/axios'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { SignInInput, SignUpInput } from '@/schemas/authSchema'
+import { useMutation } from '@tanstack/react-query'
+import { SignInInput } from '@/schemas/authSchema'
 import { useAuthStore } from '@/store/authStore'
 import { toast } from 'react-toastify'
+
+interface FileDoc {
+  file_name: string
+  file_type: string
+  file_url: string
+  file_id: string
+}
+
+export interface SignUpPayload {
+  full_name: string
+  email: string
+  password: string
+  national_id: string
+  phone: string
+  address: string
+  city: string
+  verification_documents: {
+    id_document: FileDoc
+    id_selfie: FileDoc
+  }
+}
 
 export const useSignIn = () => {
   const setAuth = useAuthStore((state) => state.setAuth)
@@ -13,7 +34,6 @@ export const useSignIn = () => {
       return response.data.data
     },
     onSuccess: (data, variables) => {
-      // Verify that the user's role matches the selected role
       const userRole = data.user.role.toLowerCase()
       const selectedRole = variables.role.toLowerCase()
 
@@ -26,8 +46,10 @@ export const useSignIn = () => {
       toast.success('Login successful! Redirecting...')
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || error.message || 'Login failed'
-      if (error.response?.status === 401) {
+      const message: string = error.response?.data?.message || error.message || 'Login failed'
+      if (message.toLowerCase().includes('pending')) {
+        toast.warning('Your account is pending admin verification. Please wait for approval.')
+      } else if (error.response?.status === 401) {
         toast.error('Invalid credentials. Please check your ID and password.')
       } else {
         toast.error(message)
@@ -37,19 +59,52 @@ export const useSignIn = () => {
 }
 
 export const useSignUp = () => {
-  const setAuth = useAuthStore((state) => state.setAuth)
-
   return useMutation({
-    mutationFn: async (data: SignUpInput) => {
+    mutationFn: async (data: SignUpPayload) => {
       const response = await axiosInstance.post('/auth/signup', data)
       return response.data.data
     },
-    onSuccess: (data) => {
-      setAuth(data.user, data.access_token, data.refresh_token)
-      toast.success('Account created successfully! Redirecting...')
-    },
     onError: (error: any) => {
       const message = error.response?.data?.message || error.message || 'Registration failed'
+      toast.error(message)
+    },
+  })
+}
+
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: async (data: { identifier: string }) => {
+      const res = await axiosInstance.post('/auth/forgot-password', data)
+      return res.data.data
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || error.message || 'Failed to send OTP'
+      toast.error(message)
+    },
+  })
+}
+
+export const useVerifyOtp = () => {
+  return useMutation({
+    mutationFn: async (data: { identifier: string; code: string }) => {
+      const res = await axiosInstance.post('/auth/verify-otp', data)
+      return res.data.data
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || error.message || 'OTP verification failed'
+      toast.error(message)
+    },
+  })
+}
+
+export const useResetPassword = () => {
+  return useMutation({
+    mutationFn: async (data: { reset_token: string; new_password: string }) => {
+      const res = await axiosInstance.post('/auth/reset-password', data)
+      return res.data.data
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || error.message || 'Password reset failed'
       toast.error(message)
     },
   })
@@ -66,8 +121,7 @@ export const useSignOut = () => {
       logout()
       toast.success('Logged out successfully')
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || error.message || 'Logout failed'
+    onError: () => {
       toast.error('Failed to logout. Please try again.')
     },
   })
