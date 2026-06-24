@@ -1,7 +1,74 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axiosInstance from '../../lib/axios'
+import { toast } from 'react-toastify'
+
+interface Profile {
+  full_name: string
+  email: string
+  phone: string
+  address: string
+  city: string
+  national_id: string
+}
+
+function initials(name: string) {
+  return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()
+}
 
 export default function CitizenAccountPage() {
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [form, setForm] = useState({ full_name: '', phone: '', address: '', city: '' })
+  const [saving, setSaving] = useState(false)
+
   const [showPwSection, setShowPwSection] = useState(false)
+  const [pwForm, setPwForm] = useState({ newPassword: '', confirmPassword: '' })
+  const [savingPw, setSavingPw] = useState(false)
+
+  useEffect(() => {
+    axiosInstance.get('/users/me')
+      .then(res => {
+        const data: Profile = res.data.data
+        setProfile(data)
+        setForm({
+          full_name: data.full_name,
+          phone: data.phone ?? '',
+          address: data.address ?? '',
+          city: data.city ?? '',
+        })
+      })
+      .catch(() => toast.error('Failed to load profile'))
+  }, [])
+
+  function handleSave() {
+    setSaving(true)
+    axiosInstance.patch('/users/me', {
+      full_name: form.full_name,
+      phone: form.phone,
+      address: form.address,
+      city: form.city,
+    })
+      .then(res => {
+        const data: Profile = res.data.data
+        setProfile(data)
+        toast.success('Profile updated successfully')
+      })
+      .catch(() => toast.error('Failed to update profile'))
+      .finally(() => setSaving(false))
+  }
+
+  function handleUpdatePassword() {
+    if (!pwForm.newPassword) return toast.error('Enter a new password')
+    if (pwForm.newPassword !== pwForm.confirmPassword) return toast.error('Passwords do not match')
+    setSavingPw(true)
+    axiosInstance.patch('/users/me', { password: pwForm.newPassword })
+      .then(() => {
+        toast.success('Password updated successfully')
+        setPwForm({ newPassword: '', confirmPassword: '' })
+        setShowPwSection(false)
+      })
+      .catch(() => toast.error('Failed to update password'))
+      .finally(() => setSavingPw(false))
+  }
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -13,32 +80,40 @@ export default function CitizenAccountPage() {
       {/* Profile */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 rounded-full bg-teal-600 flex items-center justify-center text-white text-xl font-bold">AM</div>
+          <div className="w-16 h-16 rounded-full bg-teal-600 flex items-center justify-center text-white text-xl font-bold">
+            {profile ? initials(profile.full_name) : '…'}
+          </div>
           <div>
-            <p className="font-semibold text-gray-800">Ahmed Mohamed</p>
-            <p className="text-sm text-gray-500">ahmed.m@example.com</p>
+            <p className="font-semibold text-gray-800">{profile?.full_name ?? '—'}</p>
+            <p className="text-sm text-gray-500">{profile?.email ?? '—'}</p>
           </div>
         </div>
 
         <h2 className="font-semibold text-gray-800 mb-4">Personal Information</h2>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="First name" value="Ahmed" />
-          <Field label="Last name" value="Mohamed" />
-          <Field label="National ID" value="1234567890" />
-          <Field label="Phone number" value="+966 50 123 4567" />
           <div className="col-span-2">
-            <Field label="Email" value="ahmed.m@example.com" type="email" />
+            <Field label="Full name" value={form.full_name} onChange={v => setForm(f => ({ ...f, full_name: v }))} />
           </div>
           <div className="col-span-2">
-            <Field label="Address" value="123 Al-Riyadh Street, Riyadh" />
+            <Field label="Email" value={profile?.email ?? ''} type="email" readOnly />
+          </div>
+          <div className="col-span-2">
+            <Field label="National ID" value={profile?.national_id ?? ''} readOnly />
+          </div>
+          <Field label="Phone number" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} />
+          <Field label="City" value={form.city} onChange={v => setForm(f => ({ ...f, city: v }))} />
+          <div className="col-span-2">
+            <Field label="Address" value={form.address} onChange={v => setForm(f => ({ ...f, address: v }))} />
           </div>
         </div>
 
         <button
-          className="mt-6 px-6 py-2.5 rounded-lg text-white text-sm font-medium"
+          onClick={handleSave}
+          disabled={saving || !profile}
+          className="mt-6 px-6 py-2.5 rounded-lg text-white text-sm font-medium disabled:opacity-60"
           style={{ background: 'linear-gradient(135deg, #0d9488, #0a7569)' }}
         >
-          Save Changes
+          {saving ? 'Saving…' : 'Save Changes'}
         </button>
       </div>
 
@@ -49,23 +124,37 @@ export default function CitizenAccountPage() {
           className="w-full flex items-center justify-between px-6 py-4 text-sm font-semibold text-gray-800 hover:bg-gray-50"
         >
           <span className="flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="2">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
             Change Password
           </span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: showPwSection ? 'rotate(180deg)' : '' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            style={{ transform: showPwSection ? 'rotate(180deg)' : '' }}>
             <polyline points="6 9 12 15 18 9"/>
           </svg>
         </button>
         {showPwSection && (
           <div className="px-6 pb-6 space-y-3 border-t border-gray-100">
-            <Field label="Current password" type="password" value="" />
-            <Field label="New password" type="password" value="" />
-            <Field label="Confirm new password" type="password" value="" />
+            <Field
+              label="New password"
+              type="password"
+              value={pwForm.newPassword}
+              onChange={v => setPwForm(f => ({ ...f, newPassword: v }))}
+            />
+            <Field
+              label="Confirm new password"
+              type="password"
+              value={pwForm.confirmPassword}
+              onChange={v => setPwForm(f => ({ ...f, confirmPassword: v }))}
+            />
             <button
-              className="mt-2 px-6 py-2.5 rounded-lg text-white text-sm font-medium"
+              onClick={handleUpdatePassword}
+              disabled={savingPw}
+              className="mt-2 px-6 py-2.5 rounded-lg text-white text-sm font-medium disabled:opacity-60"
               style={{ background: 'linear-gradient(135deg, #0d9488, #0a7569)' }}
             >
-              Update Password
+              {savingPw ? 'Updating…' : 'Update Password'}
             </button>
           </div>
         )}
@@ -74,14 +163,24 @@ export default function CitizenAccountPage() {
   )
 }
 
-function Field({ label, value, type = 'text' }: { label: string; value: string; type?: string }) {
+function Field({
+  label, value, type = 'text', readOnly = false, onChange,
+}: {
+  label: string
+  value: string
+  type?: string
+  readOnly?: boolean
+  onChange?: (v: string) => void
+}) {
   return (
     <div>
       <label className="text-xs text-gray-500">{label}</label>
       <input
         type={type}
-        defaultValue={value}
-        className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+        value={value}
+        readOnly={readOnly}
+        onChange={e => onChange?.(e.target.value)}
+        className={`mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 ${readOnly ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}`}
       />
     </div>
   )

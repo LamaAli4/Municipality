@@ -1,28 +1,42 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { CitizenNavigateFn } from '../../lib/types'
 
 interface Props { navigate: CitizenNavigateFn }
 
+interface Service {
+  id: string
+  name: string
+  description: string
+  department_id: string
+  fee: number
+  estimated_processing_days: number
+  status: string
+  is_active: boolean
+}
+
 const categories = ['All', 'Infrastructure', 'Water', 'Electricity', 'Roads', 'Buildings']
 
-const services = [
-  { id: 1, name: 'Building Permit', category: 'Buildings', desc: 'Apply for a permit to construct or modify a building', days: 15, fee: 500 },
-  { id: 2, name: 'Water Subscription', category: 'Water', desc: 'Subscribe to water supply services for your property', days: 7, fee: 150 },
-  { id: 3, name: 'Electricity Connection', category: 'Electricity', desc: 'Connect your property to the electricity grid', days: 10, fee: 300 },
-  { id: 4, name: 'Road Damage Report', category: 'Roads', desc: 'Report damage to roads and request repairs', days: 5, fee: 0 },
-  { id: 5, name: 'Infrastructure Inspection', category: 'Infrastructure', desc: 'Request an inspection of local infrastructure', days: 8, fee: 200 },
-  { id: 6, name: 'Water Meter Installation', category: 'Water', desc: 'Install a new water meter for your property', days: 5, fee: 250 },
-]
-
 export default function ServicesPage({ navigate }: Props) {
+  const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [activeCategory, setActiveCategory] = useState('All')
   const [search, setSearch] = useState('')
 
-  const filtered = services.filter(s => {
-    const matchCat = activeCategory === 'All' || s.category === activeCategory
-    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase())
-    return matchCat && matchSearch
-  })
+  useEffect(() => {
+    fetch('https://technoamar-production.up.railway.app/services')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) setServices(json.data)
+        else setError('Failed to load services')
+      })
+      .catch(() => setError('Network error. Please try again.'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = services.filter(s =>
+    s.name.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <div className="space-y-6">
@@ -62,32 +76,43 @@ export default function ServicesPage({ navigate }: Props) {
         ))}
       </div>
 
+      {/* States */}
+      {loading && (
+        <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
+          Loading services...
+        </div>
+      )}
+      {error && (
+        <div className="text-center py-16 text-red-500 text-sm">{error}</div>
+      )}
+
       {/* Service cards */}
-      <div className="grid grid-cols-3 gap-4">
-        {filtered.map(service => (
-          <div key={service.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-              </svg>
+      {!loading && !error && (
+        <div className="grid grid-cols-3 gap-4">
+          {filtered.map(service => (
+            <div key={service.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-800 mt-2 mb-1">{service.name}</h3>
+              <p className="text-xs text-gray-500 mb-3 line-clamp-2">{service.description}</p>
+              <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                <span>{service.estimated_processing_days} days</span>
+                <span>{service.fee === 0 ? 'Free' : `$${service.fee}`}</span>
+              </div>
+              <button
+                onClick={() => navigate('service-detail', { serviceId: service.id })}
+                className="w-full py-2 rounded-lg text-white text-sm font-medium"
+                style={{ background: 'linear-gradient(135deg, #0d9488, #0a7569)' }}
+              >
+                Submit the application
+              </button>
             </div>
-            <span className="text-xs bg-teal-50 text-teal-600 px-2 py-0.5 rounded-full">{service.category}</span>
-            <h3 className="font-semibold text-gray-800 mt-2 mb-1">{service.name}</h3>
-            <p className="text-xs text-gray-500 mb-3 line-clamp-2">{service.desc}</p>
-            <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-              <span>{service.days} days</span>
-              <span>{service.fee === 0 ? 'Free' : `$${service.fee}`}</span>
-            </div>
-            <button
-              onClick={() => navigate('service-detail')}
-              className="w-full py-2 rounded-lg text-white text-sm font-medium"
-              style={{ background: 'linear-gradient(135deg, #0d9488, #0a7569)' }}
-            >
-              Submit the application
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { NavigateFn } from '../lib/types'
-import { citizens } from '../lib/data'
+import axiosInstance from '../lib/axios'
 import { CitizensIcon, EyeIcon, TrashIcon } from '../lib/icons'
 import StatCard from '../components/ui/StatCard'
 import Badge from '../components/ui/Badge'
@@ -8,11 +8,36 @@ import { SearchBar, FilterBtn } from '../components/ui/SearchBar'
 import Pagination from '../components/ui/Pagination'
 import SectionHeader from '../components/ui/SectionHeader'
 
+interface ApiUser {
+  id: string
+  full_name: string
+  national_id?: string
+  email: string
+  account_status: string
+  is_active: boolean
+  role: string
+}
+
 export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
+  const [users, setUsers] = useState<ApiUser[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
 
-  const filtered = citizens.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) || c.idNum.includes(search)
+  useEffect(() => {
+    axiosInstance.get('/admin/users', { params: { role: 'CITIZEN' } })
+      .then(res => {
+        if (res.data.success) setUsers(res.data.data)
+        else setError('Failed to load users')
+      })
+      .catch(() => setError('Network error. Please try again.'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = users.filter(u =>
+    u.full_name.toLowerCase().includes(search.toLowerCase()) ||
+    (u.national_id ?? '').includes(search) ||
+    u.email.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -23,39 +48,63 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
       />
 
       <div className="mb-6 max-w-xs">
-        <StatCard label="Total citizens" value="1,250" icon={<CitizensIcon />} />
+        <StatCard
+          label="Total citizens"
+          value={loading ? '…' : String(users.length)}
+          icon={<CitizensIcon />}
+        />
       </div>
 
-      <SearchBar placeholder="Enter name or national ID number" onSearch={setSearch}>
+      <SearchBar placeholder="Enter name, email or national ID" onSearch={setSearch}>
         <FilterBtn />
       </SearchBar>
 
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-100">
-              {['#', 'Citizens', 'ID number', 'Status', 'View', 'Delete'].map(h => (
-                <th key={h} className="text-left px-4 py-3 font-semibold text-gray-700">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(c => (
-              <tr key={c.id} className="border-t border-gray-200 hover:bg-gray-50">
-                <td className="px-4 py-3 text-gray-500">{c.id}</td>
-                <td className="px-4 py-3 text-gray-700">{c.name}</td>
-                <td className="px-4 py-3 text-gray-500">{c.idNum}</td>
-                <td className="px-4 py-3"><Badge status={c.status} /></td>
-                <td className="px-4 py-3">
-                  <button onClick={() => navigate('citizen-detail')}><EyeIcon /></button>
-                </td>
-                <td className="px-4 py-3"><button><TrashIcon /></button></td>
+      {loading && (
+        <div className="text-center py-12 text-gray-400 text-sm">Loading citizens…</div>
+      )}
+
+      {error && (
+        <div className="text-center py-12 text-red-500 text-sm">{error}</div>
+      )}
+
+      {!loading && !error && (
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-100">
+                {['#', 'Citizen', 'National ID', 'Email', 'Status', 'View', 'Delete'].map(h => (
+                  <th key={h} className="text-left px-4 py-3 font-semibold text-gray-700">{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-        <Pagination />
-      </div>
+            </thead>
+            <tbody>
+              {filtered.map((u, i) => (
+                <tr key={u.id} className="border-t border-gray-200 hover:bg-gray-50">
+                  <td className="px-4 py-3 text-gray-500">{i + 1}</td>
+                  <td className="px-4 py-3 text-gray-700">{u.full_name}</td>
+                  <td className="px-4 py-3 text-gray-500">{u.national_id ?? '—'}</td>
+                  <td className="px-4 py-3 text-gray-500">{u.email}</td>
+                  <td className="px-4 py-3">
+                    <Badge status={u.account_status} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <button onClick={() => navigate('citizen-detail', { userId: u.id })}><EyeIcon /></button>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button><TrashIcon /></button>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="text-center py-12 text-gray-400">No citizens found</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          <Pagination />
+        </div>
+      )}
     </div>
   )
 }

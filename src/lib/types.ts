@@ -7,7 +7,7 @@ export type Page =
   | 'department' | 'sections' | 'service' | 'add-service'
   | 'logs' | 'notifications' | 'account' | 'login'
 
-export type NavigateFn = (page: Page) => void
+export type NavigateFn = (page: Page, params?: Record<string, string>) => void
 
 // ── Citizen pages ──────────────────────────────────────────────────
 export type CitizenPage =
@@ -16,7 +16,7 @@ export type CitizenPage =
   | 'utility-bills' | 'pay-bill' | 'damage-assessment'
   | 'notifications' | 'account'
 
-export type CitizenNavigateFn = (page: CitizenPage) => void
+export type CitizenNavigateFn = (page: CitizenPage, params?: Record<string, string>) => void
 
 // ── Department Manager pages ───────────────────────────────────────
 export type ManagerPage =

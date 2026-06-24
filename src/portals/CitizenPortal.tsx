@@ -21,31 +21,37 @@ interface Props {
 
 export default function CitizenPortal({ onLogout }: Props) {
   const [page, setPage] = useState<CitizenPage>("home");
+  const [serviceId, setServiceId] = useState<string | null>(null);
+
+  function navigate(target: CitizenPage, params?: Record<string, string>) {
+    if (params?.serviceId) setServiceId(params.serviceId);
+    setPage(target);
+  }
 
   function renderPage() {
     switch (page) {
       case "home":
-        return <HomePage navigate={setPage} />;
+        return <HomePage navigate={navigate} />;
       case "services":
-        return <ServicesPage navigate={setPage} />;
+        return <ServicesPage navigate={navigate} />;
       case "service-detail":
-        return <ServiceDetailPage navigate={setPage} />;
+        return <ServiceDetailPage navigate={navigate} serviceId={serviceId} />;
       case "service-request":
-        return <ServiceRequestPage navigate={setPage} />;
+        return <ServiceRequestPage navigate={navigate} />;
       case "my-requests":
-        return <MyRequestsPage navigate={setPage} />;
+        return <MyRequestsPage navigate={navigate} />;
       case "request-detail":
-        return <RequestDetailPage navigate={setPage} />;
+        return <RequestDetailPage navigate={navigate} />;
       case "complaints":
-        return <ComplaintsPage navigate={setPage} />;
+        return <ComplaintsPage navigate={navigate} />;
       case "new-complaint":
-        return <NewComplaintPage navigate={setPage} />;
+        return <NewComplaintPage navigate={navigate} />;
       case "utility-bills":
-        return <UtilityBillsPage navigate={setPage} />;
+        return <UtilityBillsPage navigate={navigate} />;
       case "pay-bill":
-        return <PayBillPage navigate={setPage} />;
+        return <PayBillPage navigate={navigate} />;
       case "damage-assessment":
-        return <DamageAssessmentPage navigate={setPage} />;
+        return <DamageAssessmentPage navigate={navigate} />;
       case "notifications":
         return <CitizenNotificationsPage />;
       case "account":
@@ -54,7 +60,7 @@ export default function CitizenPortal({ onLogout }: Props) {
   }
 
   return (
-    <CitizenLayout current={page} navigate={setPage} onLogout={onLogout}>
+    <CitizenLayout current={page} navigate={navigate} onLogout={onLogout}>
       {renderPage()}
     </CitizenLayout>
   );

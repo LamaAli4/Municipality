@@ -5,6 +5,7 @@ interface BtnProps {
   label?: string
   icon?: ReactNode
   className?: string
+  disabled?: boolean
 }
 
 export function BtnCancel({ onClick, label = 'Cancel' }: BtnProps) {
@@ -18,11 +19,12 @@ export function BtnCancel({ onClick, label = 'Cancel' }: BtnProps) {
   )
 }
 
-export function BtnConfirm({ onClick, label = 'Confirm', icon }: BtnProps) {
+export function BtnConfirm({ onClick, label = 'Confirm', icon, disabled }: BtnProps) {
   return (
     <button
       onClick={onClick}
-      className="btn-confirm text-white font-semibold px-8 py-2.5 rounded-xl flex items-center gap-2 hover:opacity-90 transition-opacity"
+      disabled={disabled}
+      className="btn-confirm text-white font-semibold px-8 py-2.5 rounded-xl flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {icon}{label}
     </button>

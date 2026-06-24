@@ -15,13 +15,14 @@ import LoginPage        from '../view/auth/LoginPage'
 interface RouterProps {
   page: Page
   navigate: NavigateFn
+  selectedUserId?: string | null
 }
 
-export default function Router({ page, navigate }: RouterProps) {
+export default function Router({ page, navigate, selectedUserId }: RouterProps) {
   switch (page) {
     case 'dashboard':      return <DashboardPage navigate={navigate} />
     case 'citizens':       return <CitizensPage navigate={navigate} />
-    case 'citizen-detail': return <CitizenDetailPage navigate={navigate} />
+    case 'citizen-detail': return <CitizenDetailPage navigate={navigate} userId={selectedUserId ?? null} />
     case 'staff':          return <StaffPage />
     case 'department':     return <DepartmentPage navigate={navigate} />
     case 'sections':       return <SectionPage navigate={navigate} />

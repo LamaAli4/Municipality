@@ -1,17 +1,28 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { CitizenNavigateFn } from '../../lib/types'
+import axiosInstance from '../../lib/axios'
 
 interface Props { navigate: CitizenNavigateFn }
 
-const requests = [
-  { num: '#REQ-2024-001', service: 'Building permit', date: '12/1/2024', status: 'In process' as const },
-  { num: '#REQ-2024-002', service: 'Water subscription', date: '5/2/2024', status: 'Complete' as const },
-  { num: '#REQ-2024-003', service: 'Road damage report', date: '18/2/2024', status: 'Rejected' as const },
-  { num: '#REQ-2024-004', service: 'Electricity connection', date: '1/3/2024', status: 'Waiting for documents' as const },
-  { num: '#REQ-2024-005', service: 'Infrastructure inspection', date: '10/3/2024', status: 'In process' as const },
-]
+interface ApiRequest {
+  id: string
+  request_number?: string
+  service_id?: string
+  service?: { name: string }
+  status: string
+  created_at: string
+}
 
 type StatusFilter = 'All' | 'In process' | 'Complete' | 'Rejected' | 'Waiting for documents'
+
+const STATUS_MAP: Record<string, StatusFilter> = {
+  IN_PROGRESS: 'In process',
+  PENDING: 'In process',
+  COMPLETED: 'Complete',
+  APPROVED: 'Complete',
+  REJECTED: 'Rejected',
+  WAITING_DOCUMENTS: 'Waiting for documents',
+}
 
 const borderColors: Record<string, string> = {
   'In process': 'border-l-orange-400',
@@ -27,10 +38,37 @@ const badgeColors: Record<string, string> = {
   'Waiting for documents': 'bg-yellow-100 text-yellow-700',
 }
 
+function formatDate(iso: string) {
+  const d = new Date(iso)
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`
+}
+
 export default function MyRequestsPage({ navigate }: Props) {
+  const [requests, setRequests] = useState<ApiRequest[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<StatusFilter>('All')
 
-  const filtered = filter === 'All' ? requests : requests.filter(r => r.status === filter)
+  useEffect(() => {
+    axiosInstance.get('/requests')
+      .then(res => {
+        const json = res.data
+        if (json.success) setRequests(json.data)
+        else setError(json.message ?? 'Failed to load requests')
+      })
+      .catch(() => setError('Network error. Please try again.'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const mapped = requests.map(r => ({
+    id: r.id,
+    num: r.request_number ?? `#REQ-${r.id}`,
+    service: r.service?.name ?? `Service ${r.service_id ?? ''}`,
+    date: formatDate(r.created_at),
+    status: (STATUS_MAP[r.status] ?? r.status) as StatusFilter,
+  }))
+
+  const filtered = filter === 'All' ? mapped : mapped.filter(r => r.status === filter)
 
   return (
     <div className="space-y-6">
@@ -54,32 +92,44 @@ export default function MyRequestsPage({ navigate }: Props) {
         ))}
       </div>
 
-      {/* Request cards */}
-      <div className="space-y-3">
-        {filtered.map(req => (
-          <div
-            key={req.num}
-            onClick={() => navigate('request-detail')}
-            className={`bg-white rounded-xl border-l-4 shadow-sm border border-gray-100 p-4 cursor-pointer hover:shadow-md transition-shadow ${borderColors[req.status]}`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-gray-800">{req.service}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{req.num} • Submitted {req.date}</p>
-              </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${badgeColors[req.status]}`}>
-                {req.status}
-              </span>
-            </div>
-          </div>
-        ))}
+      {loading && (
+        <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
+          Loading requests...
+        </div>
+      )}
 
-        {filtered.length === 0 && (
-          <div className="text-center py-12 text-gray-400">
-            <p className="text-lg">No requests found</p>
-          </div>
-        )}
-      </div>
+      {error && (
+        <div className="text-center py-16 text-red-500 text-sm">{error}</div>
+      )}
+
+      {/* Request cards */}
+      {!loading && !error && (
+        <div className="space-y-3">
+          {filtered.map(req => (
+            <div
+              key={req.id}
+              onClick={() => navigate('request-detail')}
+              className={`bg-white rounded-xl border-l-4 shadow-sm border border-gray-100 p-4 cursor-pointer hover:shadow-md transition-shadow ${borderColors[req.status] ?? 'border-l-gray-300'}`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-gray-800">{req.service}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{req.num} • Submitted {req.date}</p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${badgeColors[req.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                  {req.status}
+                </span>
+              </div>
+            </div>
+          ))}
+
+          {filtered.length === 0 && (
+            <div className="text-center py-12 text-gray-400">
+              <p className="text-lg">No requests found</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
