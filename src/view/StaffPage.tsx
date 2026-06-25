@@ -137,7 +137,7 @@ export default function StaffPage() {
                 <td className="px-4 py-3 text-gray-500">
                   {e.section_id ? (sectionMap[e.section_id] ?? e.section_id) : '—'}
                 </td>
-                <td className="px-4 py-3"><Badge status={e.account_status} /></td>
+                <td className="px-4 py-3"><Badge status={!e.is_active ? 'INACTIVE' : e.account_status} /></td>
                 <td className="px-4 py-3 text-gray-500 text-xs">
                   {e.role === 'DEPARTMENT_MANAGER' ? 'Dept. Manager'
                     : e.role === 'ADMIN'   ? 'Admin'

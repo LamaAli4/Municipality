@@ -47,8 +47,11 @@ export const useSignIn = () => {
     },
     onError: (error: any) => {
       const message: string = error.response?.data?.message || error.message || 'Login failed'
-      if (message.toLowerCase().includes('pending')) {
+      const lower = message.toLowerCase()
+      if (lower.includes('pending')) {
         toast.warning('Your account is pending admin verification. Please wait for approval.')
+      } else if (lower.includes('inactive')) {
+        toast.error('Your account is inactive. Please contact the administrator to activate your account.')
       } else if (error.response?.status === 401) {
         toast.error('Invalid credentials. Please check your ID and password.')
       } else {

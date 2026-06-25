@@ -61,7 +61,7 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
                   <td className="px-4 py-3 text-gray-700">{u.full_name}</td>
                   <td className="px-4 py-3 text-gray-500">{u.national_id ?? '—'}</td>
                   <td className="px-4 py-3 text-gray-500">{u.email}</td>
-                  <td className="px-4 py-3"><Badge status={u.account_status} /></td>
+                  <td className="px-4 py-3"><Badge status={!u.is_active ? 'INACTIVE' : u.account_status} /></td>
                   <td className="px-4 py-3">
                     <button onClick={() => navigate('citizen-detail', { userId: u.id })}><EyeIcon /></button>
                   </td>

@@ -24,14 +24,11 @@ interface ImageKitAuth {
 }
 
 const CITIES = [
-  { value: 'GAZA', label: 'Gaza' },
-  { value: 'KHAN_YUNIS', label: 'Khan Yunis' },
-  { value: 'RAFAH', label: 'Rafah' },
-  { value: 'DEIR_AL_BALAH', label: 'Deir al-Balah' },
-  { value: 'JABALIA', label: 'Jabalia' },
-  { value: 'BEIT_LAHIA', label: 'Beit Lahia' },
-  { value: 'BEIT_HANOUN', label: 'Beit Hanoun' },
-  { value: 'ABASAN', label: 'Abasan' },
+  { value: 'GAZA',   label: 'Gaza' },
+  { value: 'MIDDLE', label: 'Middle' },
+  { value: 'KHAN',   label: 'Khan Younis' },
+  { value: 'RAFAH',  label: 'Rafah' },
+  { value: 'NORTH',  label: 'North' },
 ]
 
 async function fetchImageKitAuth(): Promise<ImageKitAuth> {

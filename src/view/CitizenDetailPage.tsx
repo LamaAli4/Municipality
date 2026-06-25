@@ -149,29 +149,48 @@ export default function CitizenDetailPage({ navigate, userId }: { navigate: Navi
 
             <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
               <h2 className="font-bold text-gray-800 mb-3">Verification documents</h2>
-              {user.citizen_profile?.id_document?.file_url ? (
+              {user.citizen_profile?.verification_document ? (
                 <a
-                  href={user.citizen_profile.id_document.file_url}
+                  href={user.citizen_profile.verification_document}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex bg-gray-100 rounded-xl h-28 items-center justify-center mb-3 hover:opacity-80 transition-opacity"
+                  className="flex bg-gray-100 rounded-xl h-28 items-center justify-center mb-3 hover:bg-teal-50 hover:border hover:border-teal-200 transition-all group"
                 >
-                  <span className="text-xs text-teal-600 font-medium">View ID Document</span>
+                  <div className="flex flex-col items-center gap-1">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="1.8">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    <span className="text-xs text-teal-600 font-medium">View ID Document</span>
+                  </div>
                 </a>
               ) : (
                 <div className="bg-gray-100 rounded-xl h-28 flex items-center justify-center mb-3">
                   <ImagePlaceholderIcon />
                 </div>
               )}
-              {user.citizen_profile?.id_selfie?.file_url && (
+              {user.citizen_profile?.id_selfie ? (
                 <a
-                  href={user.citizen_profile.id_selfie.file_url}
+                  href={user.citizen_profile.id_selfie}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex bg-gray-100 rounded-xl h-16 items-center justify-center mb-3 hover:opacity-80 transition-opacity"
+                  className="flex bg-gray-100 rounded-xl h-20 items-center justify-center mb-3 hover:bg-teal-50 hover:border hover:border-teal-200 transition-all overflow-hidden"
                 >
-                  <span className="text-xs text-teal-600 font-medium">View Selfie</span>
+                  <img
+                    src={user.citizen_profile.id_selfie}
+                    alt="ID Selfie"
+                    className="h-full w-full object-cover rounded-xl"
+                    onError={e => {
+                      const img = e.target as HTMLImageElement
+                      img.style.display = 'none'
+                      img.parentElement!.innerHTML = '<span class="text-xs text-teal-600 font-medium">View Selfie</span>'
+                    }}
+                  />
                 </a>
+              ) : (
+                <div className="bg-gray-100 rounded-xl h-20 flex items-center justify-center mb-3">
+                  <ImagePlaceholderIcon />
+                </div>
               )}
               <div className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2 bg-gray-50">
                 <CheckIcon />

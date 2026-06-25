@@ -20,8 +20,10 @@ export interface AdminUser {
   updated_at?: string
   last_login_at?: string
   citizen_profile?: {
-    id_document?: { file_url: string }
-    id_selfie?: { file_url: string }
+    verification_document?: string
+    id_selfie?: string
+    rejection_reason?: string | null
+    verified_at?: string | null
   }
 }
 
