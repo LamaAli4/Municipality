@@ -5,6 +5,7 @@ export type Role = 'admin' | 'citizen' | 'department_manager' | 'employee'
 export type Page =
   | 'dashboard' | 'citizens' | 'citizen-detail' | 'staff'
   | 'department' | 'sections' | 'service' | 'add-service' | 'service-detail'
+  | 'complaints' | 'complaint-detail'
   | 'logs' | 'notifications' | 'account' | 'login'
 
 export type NavigateFn = (page: Page, params?: Record<string, string>) => void
@@ -12,7 +13,7 @@ export type NavigateFn = (page: Page, params?: Record<string, string>) => void
 // ── Citizen pages ──────────────────────────────────────────────────
 export type CitizenPage =
   | 'home' | 'services' | 'service-detail' | 'service-request'
-  | 'my-requests' | 'request-detail' | 'complaints' | 'new-complaint'
+  | 'my-requests' | 'request-detail' | 'complaints' | 'new-complaint' | 'complaint-detail'
   | 'utility-bills' | 'pay-bill' | 'damage-assessment'
   | 'notifications' | 'account'
 

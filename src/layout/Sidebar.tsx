@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Page, NavigateFn } from '../lib/types'
 import {
   DashboardIcon, CitizensIcon, StaffIcon, DepartmentIcon,
-  ServiceIcon, BellIcon, AccountIcon, ChevronRightIcon,
+  ServiceIcon, ComplaintsIcon, BellIcon, AccountIcon, ChevronRightIcon,
 } from '../lib/icons'
 import Logo from '../assets/logo.png'
 
@@ -12,6 +12,7 @@ const navItems = [
   { key: 'staff'      as Page, label: 'Staff management',    Icon: StaffIcon      },
   { key: 'department' as Page, label: 'Department',          Icon: DepartmentIcon },
   { key: 'service'    as Page, label: 'Service management',  Icon: ServiceIcon    },
+  { key: 'complaints' as Page, label: 'Complaints',          Icon: ComplaintsIcon },
   // TODO: System logs — deferred
   // { key: 'logs' as Page, label: 'System logs', Icon: LogsIcon },
 ]
@@ -23,9 +24,11 @@ const bottomItems = [
 
 function isActive(current: Page, itemKey: Page): boolean {
   if (current === itemKey) return true
-  if (current === 'citizen-detail' && itemKey === 'citizens')   return true
-  if (current === 'sections'       && itemKey === 'department') return true
-  if (current === 'add-service'    && itemKey === 'service')    return true
+  if (current === 'citizen-detail'   && itemKey === 'citizens')    return true
+  if (current === 'sections'         && itemKey === 'department')  return true
+  if (current === 'add-service'      && itemKey === 'service')     return true
+  if (current === 'service-detail'   && itemKey === 'service')     return true
+  if (current === 'complaint-detail' && itemKey === 'complaints')  return true
   return false
 }
 
