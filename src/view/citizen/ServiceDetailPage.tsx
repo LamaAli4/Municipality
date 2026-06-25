@@ -1,25 +1,6 @@
-import { useState, useEffect } from 'react'
 import type { CitizenNavigateFn } from '../../lib/types'
 import { ChevronLeftIcon } from '../../lib/icons'
-
-interface WorkflowTask {
-  id: string
-  name: string
-  description: string
-  task_order: number
-  estimated_time_hours: number
-}
-
-interface ServiceDetail {
-  id: string
-  name: string
-  description: string
-  department_id: string
-  fee: number
-  estimated_processing_days: number
-  workflow_tasks: WorkflowTask[]
-  required_documents: string[]
-}
+import { useServiceDetail } from '../../services/servicesService'
 
 interface Props {
   navigate: CitizenNavigateFn
@@ -27,21 +8,7 @@ interface Props {
 }
 
 export default function ServiceDetailPage({ navigate, serviceId }: Props) {
-  const [service, setService] = useState<ServiceDetail | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const id = serviceId ?? '1'
-    fetch(`https://technoamar-production.up.railway.app/services/${id}`)
-      .then(res => res.json())
-      .then(json => {
-        if (json.success) setService(json.data)
-        else setError('Failed to load service details')
-      })
-      .catch(() => setError('Network error. Please try again.'))
-      .finally(() => setLoading(false))
-  }, [serviceId])
+  const { data: service, isLoading, isError } = useServiceDetail(serviceId)
 
   return (
     <div className="space-y-6">
@@ -49,17 +16,14 @@ export default function ServiceDetailPage({ navigate, serviceId }: Props) {
         <ChevronLeftIcon /> Back To Services
       </button>
 
-      {loading && (
-        <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
-          Loading service details...
-        </div>
+      {isLoading && (
+        <div className="flex items-center justify-center py-16 text-gray-400 text-sm">Loading service details...</div>
+      )}
+      {isError && (
+        <div className="text-center py-16 text-red-500 text-sm">Failed to load service details</div>
       )}
 
-      {error && (
-        <div className="text-center py-16 text-red-500 text-sm">{error}</div>
-      )}
-
-      {!loading && !error && service && (
+      {!isLoading && !isError && service && (
         <>
           <div>
             <h1 className="text-xl font-bold text-gray-800">{service.name}</h1>
@@ -67,7 +31,6 @@ export default function ServiceDetailPage({ navigate, serviceId }: Props) {
           </div>
 
           <div className="grid grid-cols-3 gap-6">
-            {/* Main info */}
             <div className="col-span-2 space-y-4">
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                 <h2 className="font-semibold text-gray-800 mb-4">Service Information</h2>
@@ -108,7 +71,6 @@ export default function ServiceDetailPage({ navigate, serviceId }: Props) {
               )}
             </div>
 
-            {/* Sidebar */}
             <div className="space-y-4">
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                 <h2 className="font-semibold text-gray-800 mb-4">Required Documents</h2>
@@ -116,12 +78,12 @@ export default function ServiceDetailPage({ navigate, serviceId }: Props) {
                   <p className="text-sm text-gray-400">No documents required</p>
                 ) : (
                   <ul className="space-y-2">
-                    {service.required_documents.map((doc, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                    {service.required_documents.map((doc) => (
+                      <li key={doc.id} className="flex items-center gap-2 text-sm text-gray-700">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12"/>
                         </svg>
-                        {doc}
+                        {doc.name}
                       </li>
                     ))}
                   </ul>

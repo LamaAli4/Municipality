@@ -1,33 +1,78 @@
 import { useState } from 'react'
-import { employees } from '../lib/data'
 import { StaffIcon, CitizensIcon, DisableUserIcon, EditIcon, TrashIcon, AddUserIcon } from '../lib/icons'
 import StatCard from '../components/ui/StatCard'
 import Badge from '../components/ui/Badge'
-import { SearchBar, FilterBtn } from '../components/ui/SearchBar'
+import { SearchBar } from '../components/ui/SearchBar'
 import Pagination from '../components/ui/Pagination'
 import SectionHeader from '../components/ui/SectionHeader'
 import { PrimaryBtn } from '../components/ui/Button'
 import AddEmployeeModal from './modals/AddEmployeeModal'
+import DeleteModal from './modals/DeleteModal'
+import { useAdminUsers, useDeleteEmployee } from '../services/adminService'
+import type { AdminUser } from '../services/adminService'
+import { useSections } from '../services/sectionsService'
 import EditEmployeeModal from './modals/EditEmployeeModal'
-import DisableEmployeeModal from './modals/DisableEmployeeModal'
 
-type Modal = 'add' | 'edit' | 'disable' | null
+const PAGE_SIZE = 5
+
+type RoleFilter = 'ALL' | 'ADMIN' | 'CITIZEN' | 'EMPLOYEE' | 'DEPARTMENT_MANAGER'
+
+const ROLE_TABS: { value: RoleFilter; label: string }[] = [
+  { value: 'ALL',                label: 'All'              },
+  { value: 'ADMIN',              label: 'Admin'            },
+  { value: 'CITIZEN',            label: 'Citizen'          },
+  { value: 'EMPLOYEE',           label: 'Employee'         },
+  { value: 'DEPARTMENT_MANAGER', label: 'Dept. Manager'    },
+]
 
 export default function StaffPage() {
-  const [modal, setModal] = useState<Modal>(null)
-  const [search, setSearch] = useState('')
+  const [showAdd, setShowAdd]           = useState(false)
+  const [editUser, setEditUser]         = useState<AdminUser | null>(null)
+  const [deleteUser, setDeleteUser]     = useState<AdminUser | null>(null)
+  const [search, setSearch]             = useState('')
+  const [roleFilter, setRoleFilter]     = useState<RoleFilter>('ALL')
+  const [page, setPage]                 = useState(1)
 
-  const filtered = employees.filter(e =>
-    e.name.toLowerCase().includes(search.toLowerCase())
-  )
-  const activeCount   = employees.filter(e => e.status === 'Active').length
-  const inactiveCount = employees.filter(e => e.status === 'Inactive').length
+  const { data: employees = [], isLoading: loadingEmp } = useAdminUsers('EMPLOYEE')
+  const { data: managers  = [], isLoading: loadingMgr } = useAdminUsers('DEPARTMENT_MANAGER')
+  const { data: admins    = [], isLoading: loadingAdm } = useAdminUsers('ADMIN')
+  const { data: citizens  = [], isLoading: loadingCit } = useAdminUsers('CITIZEN')
+  const { data: allSections = [] }                      = useSections()
+  const deleteEmployee = useDeleteEmployee()
+
+  const isLoading = loadingEmp || loadingMgr || loadingAdm || loadingCit
+  const allStaff  = [...admins, ...citizens, ...employees, ...managers]
+
+  const sectionMap = Object.fromEntries(allSections.map(s => [s.id, s.name]))
+
+  const filtered = allStaff
+    .filter(u => roleFilter === 'ALL' || u.role === roleFilter)
+    .filter(u =>
+      u.full_name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase())
+    )
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  const activeCount   = allStaff.filter(e => e.account_status === 'ACTIVE').length
+  const inactiveCount = allStaff.filter(e => e.account_status === 'INACTIVE').length
 
   return (
     <div>
-      {modal === 'add'     && <AddEmployeeModal     onClose={() => setModal(null)} />}
-      {modal === 'edit'    && <EditEmployeeModal    onClose={() => setModal(null)} />}
-      {modal === 'disable' && <DisableEmployeeModal onClose={() => setModal(null)} />}
+      {showAdd  && <AddEmployeeModal onClose={() => setShowAdd(false)} />}
+      {editUser && <EditEmployeeModal user={editUser} onClose={() => setEditUser(null)} />}
+      {deleteUser && (
+        <DeleteModal
+          title="Delete employee"
+          message={`Are you sure you want to delete "${deleteUser.full_name}"? This action cannot be undone.`}
+          isPending={deleteEmployee.isPending}
+          onClose={() => setDeleteUser(null)}
+          onConfirm={() =>
+            deleteEmployee.mutate(deleteUser.id, { onSuccess: () => setDeleteUser(null) })
+          }
+        />
+      )}
 
       <SectionHeader
         title="Department staff management"
@@ -35,55 +80,85 @@ export default function StaffPage() {
           <PrimaryBtn
             label="Add a new employee"
             icon={<AddUserIcon />}
-            onClick={() => setModal('add')}
+            onClick={() => setShowAdd(true)}
           />
         }
       />
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <StatCard label="Total employees"    value="500"                    icon={<StaffIcon />}       />
-        <StatCard label="Active employees"   value={String(activeCount)}    icon={<CitizensIcon />}    />
-        <StatCard label="Inactive employees" value={String(inactiveCount)}  icon={<DisableUserIcon />} />
+        <StatCard label="Total employees"    value={String(allStaff.length)}  icon={<StaffIcon />}       />
+        <StatCard label="Active employees"   value={String(activeCount)}       icon={<CitizensIcon />}    />
+        <StatCard label="Inactive employees" value={String(inactiveCount)}     icon={<DisableUserIcon />} />
       </div>
 
-      <SearchBar placeholder="Search by employee name or number." onSearch={setSearch}>
-        <FilterBtn />
-      </SearchBar>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex-1">
+          <SearchBar placeholder="Search by employee name or email" onSearch={v => { setSearch(v); setPage(1) }} />
+        </div>
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        {ROLE_TABS.map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => { setRoleFilter(tab.value); setPage(1) }}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              roleFilter === tab.value
+                ? 'bg-primary text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-100">
-              {['#', 'Employee', 'Section', 'Status', 'Tasks', 'Edit', 'Delete'].map(h => (
+              {['#', 'Employee', 'Section', 'Status', 'Role', 'Edit', 'Delete'].map(h => (
                 <th key={h} className="text-left px-4 py-3 font-semibold text-gray-700">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.map(e => (
+            {isLoading ? (
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">Loading…</td></tr>
+            ) : filtered.length === 0 ? (
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">No employees found</td></tr>
+            ) : paginated.map((e, i) => (
               <tr key={e.id} className="border-t border-gray-200 hover:bg-gray-50">
-                <td className="px-4 py-3 text-gray-500">{e.id}</td>
-                <td className="px-4 py-3 text-gray-700">{e.name}</td>
-                <td className="px-4 py-3 text-gray-500">{e.section}</td>
+                <td className="px-4 py-3 text-gray-500">{(page - 1) * PAGE_SIZE + i + 1}</td>
                 <td className="px-4 py-3">
-                  <button onClick={() => setModal('disable')}>
-                    <Badge status={e.status} />
+                  <p className="font-medium text-gray-800">{e.full_name}</p>
+                  <p className="text-xs text-gray-400">{e.email}</p>
+                </td>
+                <td className="px-4 py-3 text-gray-500">
+                  {e.section_id ? (sectionMap[e.section_id] ?? e.section_id) : '—'}
+                </td>
+                <td className="px-4 py-3"><Badge status={e.account_status} /></td>
+                <td className="px-4 py-3 text-gray-500 text-xs">
+                  {e.role === 'DEPARTMENT_MANAGER' ? 'Dept. Manager'
+                    : e.role === 'ADMIN'   ? 'Admin'
+                    : e.role === 'CITIZEN' ? 'Citizen'
+                    : 'Employee'}
+                </td>
+                <td className="px-4 py-3">
+                  <button className="text-gray-400 hover:text-primary" onClick={() => setEditUser(e)}>
+                    <EditIcon />
                   </button>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full border border-gray-200">
-                    {e.tasks} tasks
-                  </span>
+                  <button className="text-gray-400 hover:text-red-500" onClick={() => setDeleteUser(e)}>
+                    <TrashIcon />
+                  </button>
                 </td>
-                <td className="px-4 py-3">
-                  <button onClick={() => setModal('edit')}><EditIcon /></button>
-                </td>
-                <td className="px-4 py-3"><button><TrashIcon /></button></td>
               </tr>
             ))}
           </tbody>
         </table>
-        <Pagination />
+        <Pagination current={page} total={totalPages} onChange={setPage} />
       </div>
     </div>
   )

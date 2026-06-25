@@ -11,7 +11,8 @@ const navItems = [
   { key: 'staff'      as Page, label: 'Staff management',    Icon: StaffIcon      },
   { key: 'department' as Page, label: 'Department',          Icon: DepartmentIcon },
   { key: 'service'    as Page, label: 'Service management',  Icon: ServiceIcon    },
-  { key: 'logs'       as Page, label: 'System logs',         Icon: LogsIcon       },
+  // TODO: System logs — 
+  // { key: 'logs' as Page, label: 'System logs', Icon: LogsIcon },
 ]
 
 const bottomItems = [

@@ -1,23 +1,27 @@
 import { useState } from 'react'
 import Modal from '../../components/ui/Modal'
-import WarningBox from '../../components/ui/WarningBox'
 import { BtnCancel, BtnConfirm } from '../../components/ui/Button'
 import { Input, Textarea } from '../../components/ui/Input'
 import { EditIcon, SaveIcon } from '../../lib/icons'
-import { useCreateDepartment } from '../../services/departmentsService'
+import { useUpdateDepartment } from '../../services/departmentsService'
 
-export default function AddDepartmentModal({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const createDepartment = useCreateDepartment()
+interface Props {
+  onClose: () => void
+  department: { id: string; name: string; description?: string }
+}
+
+export default function EditDepartmentModal({ onClose, department }: Props) {
+  const [name, setName] = useState(department.name)
+  const [description, setDescription] = useState(department.description ?? '')
+  const updateDepartment = useUpdateDepartment()
 
   function handleSave() {
     if (!name.trim()) return
-    createDepartment.mutate({ name, description }, { onSuccess: onClose })
+    updateDepartment.mutate({ id: department.id, name, description }, { onSuccess: onClose })
   }
 
   return (
-    <Modal title="Add a new department" icon={<EditIcon />} onClose={onClose}>
+    <Modal title="Edit department" icon={<EditIcon />} onClose={onClose}>
       <div className="space-y-4">
         <Input
           label="Department name"
@@ -32,14 +36,13 @@ export default function AddDepartmentModal({ onClose }: { onClose: () => void })
           onChange={e => setDescription(e.target.value)}
         />
       </div>
-      <WarningBox text="The will be a new department added to the list of sections immediately after saving, and you can customize access permissions later through the section settings." />
       <div className="flex justify-between mt-6">
         <BtnCancel onClick={onClose} />
         <BtnConfirm
-          label={createDepartment.isPending ? 'Saving…' : 'Save'}
+          label={updateDepartment.isPending ? 'Saving…' : 'Save'}
           icon={<SaveIcon />}
           onClick={handleSave}
-          disabled={createDepartment.isPending}
+          disabled={updateDepartment.isPending}
         />
       </div>
     </Modal>

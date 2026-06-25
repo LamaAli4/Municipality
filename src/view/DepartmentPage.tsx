@@ -1,30 +1,54 @@
 import { useState } from 'react'
 import type { NavigateFn } from '../lib/types'
-import { departments } from '../lib/data'
-import { SearchIcon, PlusIcon, EyeIcon, TrashIcon } from '../lib/icons'
+import type { Department } from '../services/departmentsService'
+import { useDepartments, useDeleteDepartment } from '../services/departmentsService'
+import { SearchIcon, PlusIcon, EyeIcon, EditIcon, TrashIcon } from '../lib/icons'
 import SectionHeader from '../components/ui/SectionHeader'
 import { PrimaryBtn } from '../components/ui/Button'
 import AddDepartmentModal from './modals/AddDepartmentModal'
+import EditDepartmentModal from './modals/EditDepartmentModal'
 import DeleteModal from './modals/DeleteModal'
 
-type Modal = 'add' | 'delete' | null
+type Modal = 'add' | 'edit' | 'delete' | null
 
 export default function DepartmentPage({ navigate }: { navigate: NavigateFn }) {
   const [modal, setModal] = useState<Modal>(null)
+  const [selected, setSelected] = useState<Department | null>(null)
   const [search, setSearch] = useState('')
+  const { data: departments = [], isLoading, isError } = useDepartments()
+  const deleteDepartment = useDeleteDepartment()
 
   const filtered = departments.filter(d =>
     d.name.toLowerCase().includes(search.toLowerCase())
   )
 
+  function sectionsCount(d: Department) {
+    return d.sections_count ?? d._count?.sections ?? '—'
+  }
+
+  function openEdit(d: Department) {
+    setSelected(d)
+    setModal('edit')
+  }
+
+  function openDelete(d: Department) {
+    setSelected(d)
+    setModal('delete')
+  }
+
   return (
     <div>
-      {modal === 'add'    && <AddDepartmentModal onClose={() => setModal(null)} />}
-      {modal === 'delete' && (
+      {modal === 'add' && <AddDepartmentModal onClose={() => setModal(null)} />}
+      {modal === 'edit' && selected && (
+        <EditDepartmentModal department={selected} onClose={() => setModal(null)} />
+      )}
+      {modal === 'delete' && selected && (
         <DeleteModal
           title="Delete department"
           message="Are you sure you want to delete this department? This action cannot be undone."
           onClose={() => setModal(null)}
+          onConfirm={() => deleteDepartment.mutate(selected.id, { onSuccess: () => setModal(null) })}
+          isPending={deleteDepartment.isPending}
         />
       )}
 
@@ -45,33 +69,50 @@ export default function DepartmentPage({ navigate }: { navigate: NavigateFn }) {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-100">
-              {['#', 'Department name', 'Description', 'Num sections', 'View', 'Delete'].map(h => (
-                <th key={h} className="text-left px-4 py-3 font-semibold text-gray-700">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(d => (
-              <tr key={d.id} className="border-t border-gray-200 hover:bg-gray-50">
-                <td className="px-4 py-3 text-gray-500">{d.id}</td>
-                <td className="px-4 py-3 text-gray-700">{d.name}</td>
-                <td className="px-4 py-3 text-gray-500">{d.desc}</td>
-                <td className="px-4 py-3 text-gray-500">{d.sections} sections</td>
-                <td className="px-4 py-3">
-                  <button onClick={() => navigate('sections')}><EyeIcon /></button>
-                </td>
-                <td className="px-4 py-3">
-                  <button onClick={() => setModal('delete')}><TrashIcon /></button>
-                </td>
+      {isLoading && (
+        <div className="text-center py-12 text-gray-400 text-sm">Loading departments…</div>
+      )}
+      {isError && (
+        <div className="text-center py-12 text-red-500 text-sm">Failed to load departments</div>
+      )}
+
+      {!isLoading && !isError && (
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-100">
+                {['#', 'Department name', 'Description', 'Num sections', 'View', 'Edit', 'Delete'].map(h => (
+                  <th key={h} className="text-left px-4 py-3 font-semibold text-gray-700">{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {filtered.map((d, i) => (
+                <tr key={d.id} className="border-t border-gray-200 hover:bg-gray-50">
+                  <td className="px-4 py-3 text-gray-500">{i + 1}</td>
+                  <td className="px-4 py-3 text-gray-700">{d.name}</td>
+                  <td className="px-4 py-3 text-gray-500">{d.description ?? '—'}</td>
+                  <td className="px-4 py-3 text-gray-500">{sectionsCount(d)} sections</td>
+                  <td className="px-4 py-3">
+                    <button onClick={() => navigate('sections', { departmentId: d.id })}><EyeIcon /></button>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button onClick={() => openEdit(d)}><EditIcon /></button>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button onClick={() => openDelete(d)}><TrashIcon /></button>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="text-center py-12 text-gray-400">No departments found</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

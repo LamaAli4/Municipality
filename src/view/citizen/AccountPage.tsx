@@ -1,73 +1,47 @@
 import { useState, useEffect } from 'react'
-import axiosInstance from '../../lib/axios'
-import { toast } from 'react-toastify'
-
-interface Profile {
-  full_name: string
-  email: string
-  phone: string
-  address: string
-  city: string
-  national_id: string
-}
+import { useMyProfile, useUpdateProfile, useUpdatePassword } from '../../services/profileService'
 
 function initials(name: string) {
   return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()
 }
 
 export default function CitizenAccountPage() {
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [form, setForm] = useState({ full_name: '', phone: '', address: '', city: '' })
-  const [saving, setSaving] = useState(false)
+  const { data: profile, isLoading } = useMyProfile()
+  const updateProfile = useUpdateProfile()
+  const updatePassword = useUpdatePassword()
 
+  const [form, setForm] = useState({ full_name: '', phone: '', address: '', city: '' })
   const [showPwSection, setShowPwSection] = useState(false)
   const [pwForm, setPwForm] = useState({ newPassword: '', confirmPassword: '' })
-  const [savingPw, setSavingPw] = useState(false)
 
   useEffect(() => {
-    axiosInstance.get('/users/me')
-      .then(res => {
-        const data: Profile = res.data.data
-        setProfile(data)
-        setForm({
-          full_name: data.full_name,
-          phone: data.phone ?? '',
-          address: data.address ?? '',
-          city: data.city ?? '',
-        })
+    if (profile) {
+      setForm({
+        full_name: profile.full_name,
+        phone: profile.phone ?? '',
+        address: profile.address ?? '',
+        city: profile.city ?? '',
       })
-      .catch(() => toast.error('Failed to load profile'))
-  }, [])
+    }
+  }, [profile])
 
   function handleSave() {
-    setSaving(true)
-    axiosInstance.patch('/users/me', {
-      full_name: form.full_name,
-      phone: form.phone,
-      address: form.address,
-      city: form.city,
-    })
-      .then(res => {
-        const data: Profile = res.data.data
-        setProfile(data)
-        toast.success('Profile updated successfully')
-      })
-      .catch(() => toast.error('Failed to update profile'))
-      .finally(() => setSaving(false))
+    updateProfile.mutate(form)
   }
 
   function handleUpdatePassword() {
-    if (!pwForm.newPassword) return toast.error('Enter a new password')
-    if (pwForm.newPassword !== pwForm.confirmPassword) return toast.error('Passwords do not match')
-    setSavingPw(true)
-    axiosInstance.patch('/users/me', { password: pwForm.newPassword })
-      .then(() => {
-        toast.success('Password updated successfully')
+    if (!pwForm.newPassword) return
+    if (pwForm.newPassword !== pwForm.confirmPassword) return
+    updatePassword.mutate(pwForm.newPassword, {
+      onSuccess: () => {
         setPwForm({ newPassword: '', confirmPassword: '' })
         setShowPwSection(false)
-      })
-      .catch(() => toast.error('Failed to update password'))
-      .finally(() => setSavingPw(false))
+      },
+    })
+  }
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center py-16 text-gray-400 text-sm">Loading profile...</div>
   }
 
   return (
@@ -77,7 +51,6 @@ export default function CitizenAccountPage() {
         <p className="text-sm text-gray-500">Manage your profile and settings</p>
       </div>
 
-      {/* Profile */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center gap-4 mb-6">
           <div className="w-16 h-16 rounded-full bg-teal-600 flex items-center justify-center text-white text-xl font-bold">
@@ -95,7 +68,7 @@ export default function CitizenAccountPage() {
             <Field label="Full name" value={form.full_name} onChange={v => setForm(f => ({ ...f, full_name: v }))} />
           </div>
           <div className="col-span-2">
-            <Field label="Email" value={profile?.email ?? ''} type="email" readOnly />
+            <Field label="Email" value={profile?.email ?? ''} readOnly />
           </div>
           <div className="col-span-2">
             <Field label="National ID" value={profile?.national_id ?? ''} readOnly />
@@ -109,15 +82,14 @@ export default function CitizenAccountPage() {
 
         <button
           onClick={handleSave}
-          disabled={saving || !profile}
+          disabled={updateProfile.isPending}
           className="mt-6 px-6 py-2.5 rounded-lg text-white text-sm font-medium disabled:opacity-60"
           style={{ background: 'linear-gradient(135deg, #0d9488, #0a7569)' }}
         >
-          {saving ? 'Saving…' : 'Save Changes'}
+          {updateProfile.isPending ? 'Saving…' : 'Save Changes'}
         </button>
       </div>
 
-      {/* Change Password */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <button
           onClick={() => setShowPwSection(v => !v)}
@@ -136,25 +108,17 @@ export default function CitizenAccountPage() {
         </button>
         {showPwSection && (
           <div className="px-6 pb-6 space-y-3 border-t border-gray-100">
-            <Field
-              label="New password"
-              type="password"
-              value={pwForm.newPassword}
-              onChange={v => setPwForm(f => ({ ...f, newPassword: v }))}
-            />
-            <Field
-              label="Confirm new password"
-              type="password"
-              value={pwForm.confirmPassword}
-              onChange={v => setPwForm(f => ({ ...f, confirmPassword: v }))}
-            />
+            <Field label="New password" type="password" value={pwForm.newPassword}
+              onChange={v => setPwForm(f => ({ ...f, newPassword: v }))} />
+            <Field label="Confirm new password" type="password" value={pwForm.confirmPassword}
+              onChange={v => setPwForm(f => ({ ...f, confirmPassword: v }))} />
             <button
               onClick={handleUpdatePassword}
-              disabled={savingPw}
+              disabled={updatePassword.isPending}
               className="mt-2 px-6 py-2.5 rounded-lg text-white text-sm font-medium disabled:opacity-60"
               style={{ background: 'linear-gradient(135deg, #0d9488, #0a7569)' }}
             >
-              {savingPw ? 'Updating…' : 'Update Password'}
+              {updatePassword.isPending ? 'Updating…' : 'Update Password'}
             </button>
           </div>
         )}
@@ -163,14 +127,8 @@ export default function CitizenAccountPage() {
   )
 }
 
-function Field({
-  label, value, type = 'text', readOnly = false, onChange,
-}: {
-  label: string
-  value: string
-  type?: string
-  readOnly?: boolean
-  onChange?: (v: string) => void
+function Field({ label, value, type = 'text', readOnly = false, onChange }: {
+  label: string; value: string; type?: string; readOnly?: boolean; onChange?: (v: string) => void
 }) {
   return (
     <div>

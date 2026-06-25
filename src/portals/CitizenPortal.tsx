@@ -21,10 +21,12 @@ interface Props {
 
 export default function CitizenPortal({ onLogout }: Props) {
   const [page, setPage] = useState<CitizenPage>("home");
-  const [serviceId, setServiceId] = useState<string | null>(null);
+  const [serviceId,  setServiceId]  = useState<string | null>(null);
+  const [requestId,  setRequestId]  = useState<string | null>(null);
 
   function navigate(target: CitizenPage, params?: Record<string, string>) {
-    if (params?.serviceId) setServiceId(params.serviceId);
+    if (params?.serviceId)  setServiceId(params.serviceId);
+    if (params?.requestId)  setRequestId(params.requestId);
     setPage(target);
   }
 
@@ -41,7 +43,7 @@ export default function CitizenPortal({ onLogout }: Props) {
       case "my-requests":
         return <MyRequestsPage navigate={navigate} />;
       case "request-detail":
-        return <RequestDetailPage navigate={navigate} />;
+        return <RequestDetailPage navigate={navigate} requestId={requestId} />;
       case "complaints":
         return <ComplaintsPage navigate={navigate} />;
       case "new-complaint":

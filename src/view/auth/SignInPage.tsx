@@ -47,7 +47,7 @@ export default function SignInPage({ navigate }: Props) {
       case 'citizen':
         return 'National ID'
       case 'admin':
-      case 'manager':
+      case 'department_manager':
       case 'employee':
         return 'Employee ID'
       default:
@@ -73,7 +73,7 @@ export default function SignInPage({ navigate }: Props) {
           >
             <option value="citizen">Citizen</option>
             <option value="admin">System Admin</option>
-            <option value="manager">Department Manager</option>
+            <option value="department_manager">Department Manager</option>
             <option value="employee">Employee</option>
           </select>
         </div>

@@ -6,15 +6,21 @@ interface DeleteModalProps {
   title: string
   message: string
   onClose: () => void
+  onConfirm?: () => void
+  isPending?: boolean
 }
 
-export default function DeleteModal({ title, message, onClose }: DeleteModalProps) {
+export default function DeleteModal({ title, message, onClose, onConfirm, isPending }: DeleteModalProps) {
   return (
     <Modal title={title} icon={<TrashIcon />} onClose={onClose}>
       <p className="text-gray-600 mb-6">{message}</p>
       <div className="flex justify-between">
         <BtnCancel onClick={onClose} />
-        <BtnConfirm label="Delete" />
+        <BtnConfirm
+          label={isPending ? 'Deleting…' : 'Delete'}
+          onClick={onConfirm}
+          disabled={isPending}
+        />
       </div>
     </Modal>
   )

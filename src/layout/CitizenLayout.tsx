@@ -61,7 +61,7 @@ export default function CitizenLayout({
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
       <aside
-        className="w-52 flex flex-col flex-shrink-0 text-white"
+        className="w-56 flex flex-col flex-shrink-0 text-white"
         style={{ background: "#0d3a47" }}
       >
         {/* Logo */}

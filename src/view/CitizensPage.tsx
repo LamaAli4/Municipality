@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { NavigateFn } from '../lib/types'
-import axiosInstance from '../lib/axios'
+import { useAdminUsers } from '../services/adminService'
 import { CitizensIcon, EyeIcon, TrashIcon } from '../lib/icons'
 import StatCard from '../components/ui/StatCard'
 import Badge from '../components/ui/Badge'
@@ -8,31 +8,9 @@ import { SearchBar, FilterBtn } from '../components/ui/SearchBar'
 import Pagination from '../components/ui/Pagination'
 import SectionHeader from '../components/ui/SectionHeader'
 
-interface ApiUser {
-  id: string
-  full_name: string
-  national_id?: string
-  email: string
-  account_status: string
-  is_active: boolean
-  role: string
-}
-
 export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
-  const [users, setUsers] = useState<ApiUser[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-
-  useEffect(() => {
-    axiosInstance.get('/admin/users', { params: { role: 'CITIZEN' } })
-      .then(res => {
-        if (res.data.success) setUsers(res.data.data)
-        else setError('Failed to load users')
-      })
-      .catch(() => setError('Network error. Please try again.'))
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: users = [], isLoading, isError } = useAdminUsers('CITIZEN')
 
   const filtered = users.filter(u =>
     u.full_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -50,7 +28,7 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
       <div className="mb-6 max-w-xs">
         <StatCard
           label="Total citizens"
-          value={loading ? '…' : String(users.length)}
+          value={isLoading ? '…' : String(users.length)}
           icon={<CitizensIcon />}
         />
       </div>
@@ -59,15 +37,14 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
         <FilterBtn />
       </SearchBar>
 
-      {loading && (
+      {isLoading && (
         <div className="text-center py-12 text-gray-400 text-sm">Loading citizens…</div>
       )}
-
-      {error && (
-        <div className="text-center py-12 text-red-500 text-sm">{error}</div>
+      {isError && (
+        <div className="text-center py-12 text-red-500 text-sm">Failed to load citizens</div>
       )}
 
-      {!loading && !error && (
+      {!isLoading && !isError && (
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -84,15 +61,11 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
                   <td className="px-4 py-3 text-gray-700">{u.full_name}</td>
                   <td className="px-4 py-3 text-gray-500">{u.national_id ?? '—'}</td>
                   <td className="px-4 py-3 text-gray-500">{u.email}</td>
-                  <td className="px-4 py-3">
-                    <Badge status={u.account_status} />
-                  </td>
+                  <td className="px-4 py-3"><Badge status={u.account_status} /></td>
                   <td className="px-4 py-3">
                     <button onClick={() => navigate('citizen-detail', { userId: u.id })}><EyeIcon /></button>
                   </td>
-                  <td className="px-4 py-3">
-                    <button><TrashIcon /></button>
-                  </td>
+                  <td className="px-4 py-3"><button><TrashIcon /></button></td>
                 </tr>
               ))}
               {filtered.length === 0 && (

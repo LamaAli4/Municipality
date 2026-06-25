@@ -42,11 +42,11 @@ function AppContent() {
       if (authPaths.includes(currentPath)) {
         if (role === 'admin') navigate('/admin', { replace: true })
         else if (role === 'citizen') navigate('/citizen', { replace: true })
-        else if (role === 'manager') navigate('/manager', { replace: true })
+        else if (role === 'department_manager') navigate('/manager', { replace: true })
         else navigate('/employee', { replace: true })
       } else if (role === 'admin' && currentPath !== '/admin') navigate('/admin', { replace: true })
       else if (role === 'citizen' && currentPath !== '/citizen') navigate('/citizen', { replace: true })
-      else if (role === 'manager' && currentPath !== '/manager') navigate('/manager', { replace: true })
+      else if (role === 'department_manager' && currentPath !== '/manager') navigate('/manager', { replace: true })
       else if (role === 'employee' && currentPath !== '/employee') navigate('/employee', { replace: true })
     }
   }, [isAuthenticated, user, navigate, location.pathname])

@@ -1,12 +1,10 @@
-import { useState } from 'react'
 import Modal from '../../components/ui/Modal'
 import InfoCard from '../../components/ui/InfoCard'
 import WarningBox from '../../components/ui/WarningBox'
 import { BtnCancel, BtnConfirm } from '../../components/ui/Button'
 import { Textarea } from '../../components/ui/Input'
 import { DisableUserIcon } from '../../lib/icons'
-import axiosInstance from '../../lib/axios'
-import { toast } from 'react-toastify'
+import { useDisableUser } from '../../services/adminService'
 
 interface Props {
   onClose: () => void
@@ -19,7 +17,7 @@ interface Props {
 }
 
 export default function DisableCitizenModal({ onClose, onSuccess, userId, userName, nationalId, phone, currentStatus }: Props) {
-  const [loading, setLoading] = useState(false)
+  const disableUser = useDisableUser()
 
   const fields: [string, string][] = [
     ['Full name',      userName],
@@ -29,15 +27,12 @@ export default function DisableCitizenModal({ onClose, onSuccess, userId, userNa
   ]
 
   function handleConfirm() {
-    setLoading(true)
-    axiosInstance.post(`/admin/users/${userId}/disable`)
-      .then(() => {
-        toast.success('Account disabled successfully')
+    disableUser.mutate(userId, {
+      onSuccess: () => {
         onSuccess?.()
         onClose()
-      })
-      .catch(() => toast.error('Failed to disable account'))
-      .finally(() => setLoading(false))
+      },
+    })
   }
 
   return (
@@ -50,7 +45,7 @@ export default function DisableCitizenModal({ onClose, onSuccess, userId, userNa
       />
       <div className="flex justify-between mt-6">
         <BtnCancel onClick={onClose} />
-        <BtnConfirm label={loading ? 'Disabling…' : 'Confirm'} onClick={handleConfirm} disabled={loading} />
+        <BtnConfirm label={disableUser.isPending ? 'Disabling…' : 'Confirm'} onClick={handleConfirm} disabled={disableUser.isPending} />
       </div>
     </Modal>
   )

@@ -1,10 +1,10 @@
 // ── Roles ──────────────────────────────────────────────────────────
-export type Role = 'admin' | 'citizen' | 'manager' | 'employee'
+export type Role = 'admin' | 'citizen' | 'department_manager' | 'employee'
 
 // ── Admin pages ────────────────────────────────────────────────────
 export type Page =
   | 'dashboard' | 'citizens' | 'citizen-detail' | 'staff'
-  | 'department' | 'sections' | 'service' | 'add-service'
+  | 'department' | 'sections' | 'service' | 'add-service' | 'service-detail'
   | 'logs' | 'notifications' | 'account' | 'login'
 
 export type NavigateFn = (page: Page, params?: Record<string, string>) => void

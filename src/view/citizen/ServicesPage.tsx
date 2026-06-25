@@ -1,38 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { CitizenNavigateFn } from '../../lib/types'
+import { useServices } from '../../services/servicesService'
 
 interface Props { navigate: CitizenNavigateFn }
-
-interface Service {
-  id: string
-  name: string
-  description: string
-  department_id: string
-  fee: number
-  estimated_processing_days: number
-  status: string
-  is_active: boolean
-}
 
 const categories = ['All', 'Infrastructure', 'Water', 'Electricity', 'Roads', 'Buildings']
 
 export default function ServicesPage({ navigate }: Props) {
-  const [services, setServices] = useState<Service[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [activeCategory, setActiveCategory] = useState('All')
   const [search, setSearch] = useState('')
-
-  useEffect(() => {
-    fetch('https://technoamar-production.up.railway.app/services')
-      .then(res => res.json())
-      .then(json => {
-        if (json.success) setServices(json.data)
-        else setError('Failed to load services')
-      })
-      .catch(() => setError('Network error. Please try again.'))
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: services = [], isLoading, isError } = useServices()
 
   const filtered = services.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase())
@@ -45,7 +22,6 @@ export default function ServicesPage({ navigate }: Props) {
         <p className="text-sm text-gray-500">Browse and apply for available government services</p>
       </div>
 
-      {/* Search */}
       <div className="relative">
         <input
           type="text"
@@ -59,7 +35,6 @@ export default function ServicesPage({ navigate }: Props) {
         </svg>
       </div>
 
-      {/* Categories */}
       <div className="flex gap-2 flex-wrap">
         {categories.map(cat => (
           <button
@@ -76,18 +51,14 @@ export default function ServicesPage({ navigate }: Props) {
         ))}
       </div>
 
-      {/* States */}
-      {loading && (
-        <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
-          Loading services...
-        </div>
+      {isLoading && (
+        <div className="flex items-center justify-center py-16 text-gray-400 text-sm">Loading services...</div>
       )}
-      {error && (
-        <div className="text-center py-16 text-red-500 text-sm">{error}</div>
+      {isError && (
+        <div className="text-center py-16 text-red-500 text-sm">Failed to load services</div>
       )}
 
-      {/* Service cards */}
-      {!loading && !error && (
+      {!isLoading && !isError && (
         <div className="grid grid-cols-3 gap-4">
           {filtered.map(service => (
             <div key={service.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
@@ -111,6 +82,9 @@ export default function ServicesPage({ navigate }: Props) {
               </button>
             </div>
           ))}
+          {filtered.length === 0 && (
+            <div className="col-span-3 text-center py-16 text-gray-400 text-sm">No services found</div>
+          )}
         </div>
       )}
     </div>
