@@ -3,7 +3,7 @@ import type { NavigateFn } from '../lib/types'
 import { ChevronLeftIcon, ChevronRightIcon, LogsIcon, ServiceIcon, CheckIcon, ImagePlaceholderIcon } from '../lib/icons'
 import Badge from '../components/ui/Badge'
 import DisableCitizenModal from './modals/DisableCitizenModal'
-import { useAdminUser, useVerifyUser, useRejectUser, useDisableUser, useActivateUser } from '../services/adminService'
+import { useAdminUser, useVerifyUser, useRejectUser, useDisableUser } from '../services/adminService'
 
 function fmt(iso?: string) {
   if (!iso) return '—'
@@ -13,10 +13,9 @@ function fmt(iso?: string) {
 
 export default function CitizenDetailPage({ navigate, userId }: { navigate: NavigateFn; userId: string | null }) {
   const { data: user, isLoading, isError } = useAdminUser(userId)
-  const verifyUser   = useVerifyUser()
-  const rejectUser   = useRejectUser()
-  const disableUser  = useDisableUser()
-  const activateUser = useActivateUser()
+  const verifyUser  = useVerifyUser()
+  const rejectUser  = useRejectUser()
+  const disableUser = useDisableUser()
 
   const [showDisable, setShowDisable] = useState(false)
   const [showReject,  setShowReject]  = useState(false)
@@ -92,16 +91,7 @@ export default function CitizenDetailPage({ navigate, userId }: { navigate: Navi
               </button>
             </>
           )}
-          {!user?.is_active && (
-            <button
-              onClick={() => activateUser.mutate(user!.id)}
-              disabled={activateUser.isPending}
-              className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors disabled:opacity-60"
-            >
-              {activateUser.isPending ? 'Activating…' : 'Activate account'}
-            </button>
-          )}
-          {user?.is_active && (
+          {user?.account_status === 'ACTIVE' && (
             <button
               onClick={() => setShowDisable(true)}
               className="bg-red-400 hover:bg-red-500 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
@@ -109,6 +99,7 @@ export default function CitizenDetailPage({ navigate, userId }: { navigate: Navi
               Disable account
             </button>
           )}
+          {/* INACTIVE / REJECTED → no action buttons */}
         </div>
       </div>
 
@@ -121,10 +112,10 @@ export default function CitizenDetailPage({ navigate, userId }: { navigate: Navi
 
       {!isLoading && !isError && user && (
         <>
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="col-span-2 bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div className="md:col-span-1 lg:col-span-2 bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
               <h2 className="font-bold text-gray-800 mb-3 pb-3 border-b border-gray-100">Personal information</h2>
-              <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                 {([
                   ['Full name',         user.full_name],
                   ['National ID',       user.national_id ?? '—'],
@@ -222,7 +213,7 @@ export default function CitizenDetailPage({ navigate, userId }: { navigate: Navi
             </table>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
               { title: 'Billing and payments',   headers: ['Invoice', 'Period', 'Status'] },
               { title: 'Complaints and reports', headers: ['Type', 'Date', 'Status'] },

@@ -34,6 +34,7 @@ export function useAdminUsers(role = 'CITIZEN', account_status?: string) {
       axiosInstance.get('/admin/users', {
         params: { role, ...(account_status ? { account_status } : {}) },
       }).then(r => r.data.data),
+    staleTime: 0,
   })
 }
 

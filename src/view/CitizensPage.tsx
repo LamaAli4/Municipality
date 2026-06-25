@@ -1,25 +1,45 @@
 import { useState } from 'react'
 import type { NavigateFn } from '../lib/types'
-import { useAdminUsers } from '../services/adminService'
+import { useAdminUsers, useDisableUser } from '../services/adminService'
 import { CitizensIcon, EyeIcon, TrashIcon } from '../lib/icons'
 import StatCard from '../components/ui/StatCard'
 import Badge from '../components/ui/Badge'
 import { SearchBar, FilterBtn } from '../components/ui/SearchBar'
 import Pagination from '../components/ui/Pagination'
 import SectionHeader from '../components/ui/SectionHeader'
+import DeleteModal from './modals/DeleteModal'
 
 export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
   const [search, setSearch] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+
   const { data: users = [], isLoading, isError } = useAdminUsers('CITIZEN')
+  const deleteUser = useDisableUser()
 
   const filtered = users.filter(u =>
-    u.full_name.toLowerCase().includes(search.toLowerCase()) ||
-    (u.national_id ?? '').includes(search) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
+    u.account_status !== 'INACTIVE' && (
+      u.full_name.toLowerCase().includes(search.toLowerCase()) ||
+      (u.national_id ?? '').includes(search) ||
+      u.email.toLowerCase().includes(search.toLowerCase())
+    )
   )
 
   return (
     <div>
+      {deleteTarget && (
+        <DeleteModal
+          title="Disable Citizen"
+          message={`Are you sure you want to disable "${deleteTarget.name}"?`}
+          isPending={deleteUser.isPending}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={() =>
+            deleteUser.mutate(deleteTarget.id, {
+              onSuccess: () => setDeleteTarget(null),
+            })
+          }
+        />
+      )}
+
       <SectionHeader
         title="Citizens management"
         subtitle="View and manage the accounts of citizens registered in the system"
@@ -46,7 +66,8 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
 
       {!isLoading && !isError && (
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="bg-gray-100">
                 {['#', 'Citizen', 'National ID', 'Email', 'Status', 'View', 'Delete'].map(h => (
@@ -61,11 +82,17 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
                   <td className="px-4 py-3 text-gray-700">{u.full_name}</td>
                   <td className="px-4 py-3 text-gray-500">{u.national_id ?? '—'}</td>
                   <td className="px-4 py-3 text-gray-500">{u.email}</td>
-                  <td className="px-4 py-3"><Badge status={!u.is_active ? 'INACTIVE' : u.account_status} /></td>
+                  <td className="px-4 py-3"><Badge status={u.account_status} /></td>
                   <td className="px-4 py-3">
-                    <button onClick={() => navigate('citizen-detail', { userId: u.id })}><EyeIcon /></button>
+                    <button onClick={() => navigate('citizen-detail', { userId: u.id })}>
+                      <EyeIcon />
+                    </button>
                   </td>
-                  <td className="px-4 py-3"><button><TrashIcon /></button></td>
+                  <td className="px-4 py-3">
+                    <button onClick={() => setDeleteTarget({ id: u.id, name: u.full_name })}>
+                      <TrashIcon />
+                    </button>
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
@@ -75,6 +102,7 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
               )}
             </tbody>
           </table>
+          </div>
           <Pagination />
         </div>
       )}
