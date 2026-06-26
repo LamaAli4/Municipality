@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { StaffIcon, CitizensIcon, DisableUserIcon, EditIcon, TrashIcon, AddUserIcon } from '../lib/icons'
 import StatCard from '../components/ui/StatCard'
+import CountUp from '../components/ui/CountUp'
+import PageWrapper from '../components/ui/PageWrapper'
 import Badge from '../components/ui/Badge'
 import { SearchBar } from '../components/ui/SearchBar'
 import Pagination from '../components/ui/Pagination'
@@ -59,6 +61,7 @@ export default function StaffPage() {
   const inactiveCount = allStaff.filter(e => e.account_status === 'INACTIVE').length
 
   return (
+    <PageWrapper>
     <div>
       {showAdd  && <AddEmployeeModal onClose={() => setShowAdd(false)} />}
       {editUser && <EditEmployeeModal user={editUser} onClose={() => setEditUser(null)} />}
@@ -86,9 +89,9 @@ export default function StaffPage() {
       />
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <StatCard label="Total employees"    value={String(allStaff.length)}  icon={<StaffIcon />}       />
-        <StatCard label="Active employees"   value={String(activeCount)}       icon={<CitizensIcon />}    />
-        <StatCard label="Inactive employees" value={String(inactiveCount)}     icon={<DisableUserIcon />} />
+        <StatCard label="Total employees"    value={<CountUp to={allStaff.length} />} icon={<StaffIcon />}       />
+        <StatCard label="Active employees"   value={<CountUp to={activeCount} />}     icon={<CitizensIcon />}    />
+        <StatCard label="Inactive employees" value={<CountUp to={inactiveCount} />}   icon={<DisableUserIcon />} />
       </div>
 
       <div className="flex items-center gap-3 mb-4">
@@ -161,5 +164,6 @@ export default function StaffPage() {
         <Pagination current={page} total={totalPages} onChange={setPage} />
       </div>
     </div>
+    </PageWrapper>
   )
 }

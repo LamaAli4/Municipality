@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { PasswordIcon, LogoutIcon, ChevronDownIcon, EditIcon, SaveIcon } from '../lib/icons'
 import SectionHeader from '../components/ui/SectionHeader'
+import PageWrapper from '../components/ui/PageWrapper'
 import { Input } from '../components/ui/Input'
 import { PrimaryBtn } from '../components/ui/Button'
 import { useMyProfile, useUpdateProfile, useUpdatePassword } from '../services/profileService'
@@ -66,6 +67,7 @@ export default function AccountPage() {
   if (isLoading) return <div className="p-8 text-center text-gray-400">Loading…</div>
 
   return (
+    <PageWrapper>
     <div>
       <SectionHeader
         title="Profile"
@@ -139,5 +141,6 @@ export default function AccountPage() {
         </div>
       </div>
     </div>
+    </PageWrapper>
   )
 }

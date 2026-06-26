@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import PageWrapper from '../components/ui/PageWrapper'
+import CountUp from '../components/ui/CountUp'
 import type { NavigateFn } from '../lib/types'
 import { useAdminUsers, useDisableUser } from '../services/adminService'
 import { CitizensIcon, EyeIcon, TrashIcon } from '../lib/icons'
@@ -28,6 +30,7 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
+    <PageWrapper>
     <div>
       {deleteTarget && (
         <DeleteModal
@@ -51,7 +54,7 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
       <div className="mb-6 max-w-xs">
         <StatCard
           label="Total citizens"
-          value={isLoading ? '…' : String(users.length)}
+          value={isLoading ? '…' : <CountUp to={users.length} />}
           icon={<CitizensIcon />}
         />
       </div>
@@ -110,5 +113,6 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
         </div>
       )}
     </div>
+    </PageWrapper>
   )
 }

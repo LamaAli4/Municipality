@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PageWrapper from '../components/ui/PageWrapper'
 import type { NavigateFn } from '../lib/types'
 import type { Department } from '../services/departmentsService'
 import { useDepartments, useDeleteDepartment } from '../services/departmentsService'
@@ -45,6 +46,7 @@ export default function DepartmentPage({ navigate }: { navigate: NavigateFn }) {
   }
 
   return (
+    <PageWrapper>
     <div>
       {modal === 'add' && <AddDepartmentModal onClose={() => setModal(null)} />}
       {modal === 'edit' && selected && (
@@ -123,5 +125,6 @@ export default function DepartmentPage({ navigate }: { navigate: NavigateFn }) {
         </div>
       )}
     </div>
+    </PageWrapper>
   )
 }

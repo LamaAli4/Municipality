@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useMyProfile, useUpdateProfile, useUpdatePassword } from '../../services/profileService'
+import PageWrapper from '../../components/ui/PageWrapper'
 
 function initials(name: string) {
   return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()
@@ -45,6 +46,7 @@ export default function CitizenAccountPage() {
   }
 
   return (
+    <PageWrapper>
     <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="text-xl font-bold text-gray-800">Account</h1>
@@ -124,6 +126,7 @@ export default function CitizenAccountPage() {
         )}
       </div>
     </div>
+    </PageWrapper>
   )
 }
 

@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
+import PageWrapper from '../components/ui/PageWrapper'
+import CountUp from '../components/ui/CountUp'
 import type { NavigateFn } from '../lib/types'
 import { EyeIcon } from '../lib/icons'
 import { useAdminComplaints } from '../services/adminComplaintsService'
@@ -120,6 +122,7 @@ export default function AdminComplaintsPage({ navigate }: Props) {
   })
 
   return (
+    <PageWrapper>
     <div className="space-y-6">
       {/* Header */}
       <div>
@@ -151,7 +154,7 @@ export default function AdminComplaintsPage({ navigate }: Props) {
           { label: 'Resolved',    val: complaints.filter(c => c.status === 'RESOLVED' || c.status === 'CLOSED').length, color: 'text-teal-600'   },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
-            <p className={`text-2xl font-bold ${s.color}`}>{s.val}</p>
+            <p className={`text-2xl font-bold ${s.color}`}><CountUp to={s.val} /></p>
             <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
           </div>
         ))}
@@ -232,5 +235,6 @@ export default function AdminComplaintsPage({ navigate }: Props) {
         </div>
       )}
     </div>
+    </PageWrapper>
   )
 }

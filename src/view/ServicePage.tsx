@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import PageWrapper from '../components/ui/PageWrapper'
 import type { NavigateFn } from '../lib/types'
 import { PlusIcon, EditIcon, TrashIcon } from '../lib/icons'
 import SectionHeader from '../components/ui/SectionHeader'
@@ -93,7 +94,7 @@ export default function ServicePage({ navigate }: { navigate: NavigateFn }) {
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
-    <>
+    <PageWrapper>
     <div>
       <SectionHeader
         title="Municipal services administration"
@@ -179,6 +180,6 @@ export default function ServicePage({ navigate }: { navigate: NavigateFn }) {
         onConfirm={() => deleteService.mutate(deletingService.id, { onSuccess: () => setDeletingService(null) })}
       />
     )}
-    </>
+    </PageWrapper>
   )
 }
