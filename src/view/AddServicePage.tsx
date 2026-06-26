@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { NavigateFn } from '../lib/types'
 import { ChevronLeftIcon, PlusIcon, TrashIcon } from '../lib/icons'
 import { PrimaryBtn } from '../components/ui/Button'
@@ -42,6 +42,73 @@ const emptyTask = (): TaskInput => ({ name: '', description: '', section_id: '',
 const emptyDoc  = (): DocInput  => ({ name: '', description: '', type: 'MANDATORY' })
 
 const DOC_TYPES = ['MANDATORY', 'OPTIONAL']
+
+function CustomSelect({ value, onChange, options, placeholder, disabled }: {
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+  placeholder?: string
+  disabled?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [])
+
+  const label = options.find(o => o.value === value)?.label ?? placeholder ?? options[0]?.label
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen(o => !o)}
+        className={`w-full flex items-center justify-between gap-2 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors ${
+          disabled
+            ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+            : 'border-gray-200 bg-white text-gray-700 hover:border-teal-400'
+        }`}
+      >
+        <span className={value ? '' : 'text-gray-400'}>{label}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+          className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''} ${disabled ? 'text-gray-300' : 'text-gray-400'}`}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && !disabled && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+          {placeholder && (
+            <li>
+              <button type="button" onClick={() => { onChange(''); setOpen(false) }}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                  value === '' ? 'bg-teal-600 text-white font-medium' : 'text-gray-400 hover:bg-teal-50'
+                }`}>
+                {placeholder}
+              </button>
+            </li>
+          )}
+          {options.map(opt => (
+            <li key={opt.value}>
+              <button type="button" onClick={() => { onChange(opt.value); setOpen(false) }}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                  opt.value === value ? 'bg-teal-600 text-white font-medium' : 'text-gray-700 hover:bg-teal-50'
+                }`}>
+                {opt.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 export default function AddServicePage({ navigate }: { navigate: NavigateFn }) {
   const [name, setName] = useState('')
@@ -134,14 +201,12 @@ export default function AddServicePage({ navigate }: { navigate: NavigateFn }) {
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">Department</label>
-                <select
+                <CustomSelect
                   value={departmentId}
-                  onChange={e => { setDepartmentId(e.target.value); setTasks([emptyTask()]) }}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Select department</option>
-                  {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
+                  onChange={v => { setDepartmentId(v); setTasks([emptyTask()]) }}
+                  options={departments.map(d => ({ value: d.id, label: d.name }))}
+                  placeholder="Select department"
+                />
               </div>
               <Input label="Fees" placeholder="e.g. 50" type="number" value={fee} onChange={e => setFee(e.target.value)} />
               <Input label="Processing time (days)" placeholder="e.g. 14" type="number" value={processingDays} onChange={e => setProcessingDays(e.target.value)} />
@@ -187,10 +252,11 @@ export default function AddServicePage({ navigate }: { navigate: NavigateFn }) {
                         className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                       <input placeholder="Description" value={doc.description} onChange={e => updateDoc(i, 'description', e.target.value)}
                         className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                      <select value={doc.type} onChange={e => updateDoc(i, 'type', e.target.value)}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary">
-                        {DOC_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                      </select>
+                      <CustomSelect
+                        value={doc.type}
+                        onChange={v => updateDoc(i, 'type', v)}
+                        options={DOC_TYPES.map(t => ({ value: t, label: t }))}
+                      />
                     </div>
                   ))}
                 </div>
@@ -222,11 +288,13 @@ export default function AddServicePage({ navigate }: { navigate: NavigateFn }) {
                     className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                   <input placeholder="Description" value={task.description} onChange={e => updateTask(i, 'description', e.target.value)}
                     className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                  <select value={task.section_id} onChange={e => updateTask(i, 'section_id', e.target.value)} disabled={!departmentId}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-400">
-                    <option value="">Select section</option>
-                    {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
+                  <CustomSelect
+                    value={task.section_id}
+                    onChange={v => updateTask(i, 'section_id', v)}
+                    options={sections.map(s => ({ value: s.id, label: s.name }))}
+                    placeholder="Select section"
+                    disabled={!departmentId}
+                  />
                   <input placeholder="Est. hours" type="number" value={task.estimated_time_hours} onChange={e => updateTask(i, 'estimated_time_hours', e.target.value)}
                     className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>

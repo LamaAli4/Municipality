@@ -11,18 +11,21 @@ import DeleteModal from './modals/DeleteModal'
 
 export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const PAGE_SIZE = 5
 
   const { data: users = [], isLoading, isError } = useAdminUsers('CITIZEN')
   const deleteUser = useDisableUser()
 
   const filtered = users.filter(u =>
-    u.account_status !== 'INACTIVE' && (
-      u.full_name.toLowerCase().includes(search.toLowerCase()) ||
-      (u.national_id ?? '').includes(search) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
-    )
+    u.full_name.toLowerCase().includes(search.toLowerCase()) ||
+    (u.national_id ?? '').includes(search) ||
+    u.email.toLowerCase().includes(search.toLowerCase())
   )
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <div>
@@ -53,7 +56,7 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
         />
       </div>
 
-      <SearchBar placeholder="Enter name, email or national ID" onSearch={setSearch}>
+      <SearchBar placeholder="Enter name, email or national ID" onSearch={v => { setSearch(v); setPage(1) }}>
         <FilterBtn />
       </SearchBar>
 
@@ -76,9 +79,9 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((u, i) => (
+              {paginated.map((u, i) => (
                 <tr key={u.id} className="border-t border-gray-200 hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-500">{i + 1}</td>
+                  <td className="px-4 py-3 text-gray-500">{(page - 1) * PAGE_SIZE + i + 1}</td>
                   <td className="px-4 py-3 text-gray-700">{u.full_name}</td>
                   <td className="px-4 py-3 text-gray-500">{u.national_id ?? '—'}</td>
                   <td className="px-4 py-3 text-gray-500">{u.email}</td>
@@ -95,7 +98,7 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
+              {paginated.length === 0 && (
                 <tr>
                   <td colSpan={7} className="text-center py-12 text-gray-400">No citizens found</td>
                 </tr>
@@ -103,7 +106,7 @@ export default function CitizensPage({ navigate }: { navigate: NavigateFn }) {
             </tbody>
           </table>
           </div>
-          <Pagination />
+          <Pagination current={page} total={totalPages} onChange={setPage} />
         </div>
       )}
     </div>

@@ -8,6 +8,7 @@ import DeleteModal from './modals/DeleteModal'
 import SectionDetailModal from './modals/SectionDetailModal'
 import { useDepartment } from '../services/departmentsService'
 import { useSections, useDeleteSection } from '../services/sectionsService'
+import { useAdminUsers } from '../services/adminService'
 
 type Modal = 'add' | 'edit' | 'delete' | 'view' | null
 
@@ -16,14 +17,24 @@ export default function SectionPage({ navigate, departmentId }: { navigate: Navi
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const { data: department } = useDepartment(departmentId)
   const { data: sections = [], isLoading, isError } = useSections(departmentId)
+  const { data: employees = [] } = useAdminUsers('EMPLOYEE')
   const deleteSection = useDeleteSection()
+
+  function employeesCount(sectionId: string) {
+    return employees.filter(e => e.section_id === sectionId).length
+  }
 
   const departmentName = department?.name ?? 'Department'
 
   return (
     <div>
       {modal === 'view' && selectedId && (
-        <SectionDetailModal sectionId={selectedId} onClose={() => setModal(null)} />
+        <SectionDetailModal
+          sectionId={selectedId}
+          onClose={() => setModal(null)}
+          departmentName={departmentName}
+          employeesCount={employeesCount(selectedId)}
+        />
       )}
       {modal === 'add' && <AddSectionModal onClose={() => setModal(null)} departmentId={departmentId} />}
       {modal === 'edit' && selectedId && (
@@ -87,7 +98,7 @@ export default function SectionPage({ navigate, departmentId }: { navigate: Navi
                   <td className="px-4 py-3 text-gray-700">{s.name}</td>
                   <td className="px-4 py-3 text-gray-500">{s.department?.name ?? departmentName}</td>
                   <td className="px-4 py-3 text-gray-500">
-                    {(s.employees_count ?? s._count?.employees ?? 0)} employees
+                    {employeesCount(s.id)} employees
                   </td>
                   <td className="px-4 py-3">
                     <button onClick={() => { setSelectedId(s.id); setModal('view') }}><EyeIcon /></button>

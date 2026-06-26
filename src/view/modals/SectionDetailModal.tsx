@@ -4,9 +4,11 @@ import { useSection } from '../../services/sectionsService'
 interface Props {
   onClose: () => void
   sectionId: string
+  departmentName?: string
+  employeesCount?: number
 }
 
-export default function SectionDetailModal({ onClose, sectionId }: Props) {
+export default function SectionDetailModal({ onClose, sectionId, departmentName, employeesCount }: Props) {
   const { data: section, isLoading, isError } = useSection(sectionId)
 
   return (
@@ -21,9 +23,9 @@ export default function SectionDetailModal({ onClose, sectionId }: Props) {
         <div className="space-y-4">
           {([
             ['Section name',  section.name],
-            ['Department',    section.department?.name ?? '—'],
+            ['Department',    departmentName ?? section.department?.name ?? '—'],
             ['Description',   section.description ?? '—'],
-            ['Employees',     String(section.employees_count ?? section._count?.employees ?? 0)],
+            ['Employees',     String(employeesCount ?? section.employees_count ?? section._count?.employees ?? 0)],
             ['Status',        section.is_active ? 'Active' : 'Inactive'],
           ] as [string, string][]).map(([label, value]) => (
             <div key={label} className="flex items-start gap-4 border-b border-gray-100 pb-3 last:border-0">

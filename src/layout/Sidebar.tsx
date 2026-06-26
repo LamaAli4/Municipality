@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Page, NavigateFn } from '../lib/types'
 import {
   DashboardIcon, CitizensIcon, StaffIcon, DepartmentIcon,
-  ServiceIcon, ComplaintsIcon, BellIcon, AccountIcon, ChevronRightIcon,
+  ServiceIcon, ComplaintsIcon, AccountIcon, ChevronRightIcon,
 } from '../lib/icons'
 import Logo from '../assets/logo.png'
 
@@ -18,8 +18,8 @@ const navItems = [
 ]
 
 const bottomItems = [
-  { key: 'notifications' as Page, label: 'Notifications', Icon: BellIcon    },
-  { key: 'account'       as Page, label: 'Account',        Icon: AccountIcon },
+  // { key: 'notifications' as Page, label: 'Notifications', Icon: BellIcon }, // TODO: no endpoint yet
+  { key: 'account' as Page, label: 'Account', Icon: AccountIcon },
 ]
 
 function isActive(current: Page, itemKey: Page): boolean {
@@ -60,8 +60,8 @@ function NavItem({
       <span className="shrink-0"><item.Icon /></span>
       {!collapsed && (
         <>
-          <span className="flex-1 text-left">{item.label}</span>
-          <ChevronRightIcon />
+          <span className="flex-1 text-left whitespace-nowrap overflow-hidden">{item.label}</span>
+          <span className="shrink-0"><ChevronRightIcon /></span>
         </>
       )}
     </button>
@@ -135,7 +135,7 @@ export default function Sidebar({ current, navigate, mobileOpen, onClose }: Side
       </div>
 
       {/* ── Desktop: full sidebar ────────────────────────── */}
-      <div className="hidden lg:flex w-52 shrink-0 flex-col h-screen">
+      <div className="hidden lg:flex w-56 shrink-0 flex-col h-screen">
         <SidebarContent current={current} navigate={navigate} collapsed={false} onClose={() => {}} />
       </div>
     </>

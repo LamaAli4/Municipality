@@ -2,12 +2,14 @@ import { useState } from 'react'
 import type { NavigateFn } from '../lib/types'
 import type { Department } from '../services/departmentsService'
 import { useDepartments, useDeleteDepartment } from '../services/departmentsService'
+import { useSections } from '../services/sectionsService'
 import { SearchIcon, PlusIcon, EyeIcon, EditIcon, TrashIcon } from '../lib/icons'
 import SectionHeader from '../components/ui/SectionHeader'
 import { PrimaryBtn } from '../components/ui/Button'
 import AddDepartmentModal from './modals/AddDepartmentModal'
 import EditDepartmentModal from './modals/EditDepartmentModal'
 import DeleteModal from './modals/DeleteModal'
+import Pagination from '../components/ui/Pagination'
 
 type Modal = 'add' | 'edit' | 'delete' | null
 
@@ -15,15 +17,21 @@ export default function DepartmentPage({ navigate }: { navigate: NavigateFn }) {
   const [modal, setModal] = useState<Modal>(null)
   const [selected, setSelected] = useState<Department | null>(null)
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 5
   const { data: departments = [], isLoading, isError } = useDepartments()
+  const { data: allSections = [] } = useSections()
   const deleteDepartment = useDeleteDepartment()
 
   const filtered = departments.filter(d =>
     d.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  function sectionsCount(d: Department) {
-    return d.sections_count ?? d._count?.sections ?? '—'
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  function sectionsCount(deptId: string) {
+    return allSections.filter(s => s.department_id === deptId).length
   }
 
   function openEdit(d: Department) {
@@ -64,7 +72,7 @@ export default function DepartmentPage({ navigate }: { navigate: NavigateFn }) {
           <input
             className="flex-1 outline-none text-sm text-gray-600 bg-transparent"
             placeholder="Enter the name of the department"
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => { setSearch(e.target.value); setPage(1) }}
           />
         </div>
       </div>
@@ -87,12 +95,12 @@ export default function DepartmentPage({ navigate }: { navigate: NavigateFn }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((d, i) => (
+              {paginated.map((d, i) => (
                 <tr key={d.id} className="border-t border-gray-200 hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-500">{i + 1}</td>
+                  <td className="px-4 py-3 text-gray-500">{(page - 1) * PAGE_SIZE + i + 1}</td>
                   <td className="px-4 py-3 text-gray-700">{d.name}</td>
                   <td className="px-4 py-3 text-gray-500">{d.description ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-500">{sectionsCount(d)} sections</td>
+                  <td className="px-4 py-3 text-gray-500">{sectionsCount(d.id)} sections</td>
                   <td className="px-4 py-3">
                     <button onClick={() => navigate('sections', { departmentId: d.id })}><EyeIcon /></button>
                   </td>
@@ -104,13 +112,14 @@ export default function DepartmentPage({ navigate }: { navigate: NavigateFn }) {
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
+              {paginated.length === 0 && (
                 <tr>
                   <td colSpan={7} className="text-center py-12 text-gray-400">No departments found</td>
                 </tr>
               )}
             </tbody>
           </table>
+          <Pagination current={page} total={totalPages} onChange={setPage} />
         </div>
       )}
     </div>

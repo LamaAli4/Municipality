@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { Role } from '@/lib/types'
 import type { AuthPage } from '@/lib/types'
 import Logo from '@/assets/logo.png'
@@ -9,6 +9,67 @@ import { ZodError } from 'zod'
 
 interface Props {
   navigate: (page: AuthPage) => void
+}
+
+const ROLE_OPTIONS: { value: Role; label: string }[] = [
+  { value: 'citizen',            label: 'Citizen'            },
+  { value: 'admin',              label: 'System Admin'       },
+  { value: 'department_manager', label: 'Department Manager' },
+  { value: 'employee',           label: 'Employee'           },
+]
+
+function RoleSelect({ value, onChange }: { value: Role; onChange: (r: Role) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const label = ROLE_OPTIONS.find(o => o.value === value)?.label ?? ''
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+      >
+        <span>{label}</span>
+        <svg
+          width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+          className={`text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+        >
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+          {ROLE_OPTIONS.map(opt => (
+            <li key={opt.value}>
+              <button
+                type="button"
+                onClick={() => { onChange(opt.value); setOpen(false) }}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                  opt.value === value
+                    ? 'bg-teal-600 text-white font-medium'
+                    : 'text-gray-700 hover:bg-teal-50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
 }
 
 export default function SignInPage({ navigate }: Props) {
@@ -66,16 +127,7 @@ export default function SignInPage({ navigate }: Props) {
       <form onSubmit={handleSubmit} className="mt-10 w-full max-w-sm space-y-4">
         <div>
           <label className="text-sm text-gray-600 mb-1 block">User Type</label>
-          <select
-            value={selectedRole}
-            onChange={e => setSelectedRole(e.target.value as Role)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-          >
-            <option value="citizen">Citizen</option>
-            <option value="admin">System Admin</option>
-            <option value="department_manager">Department Manager</option>
-            <option value="employee">Employee</option>
-          </select>
+          <RoleSelect value={selectedRole} onChange={setSelectedRole} />
         </div>
         <div>
           <label className="text-sm text-gray-600">{getIdentifierLabel()}</label>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Modal from '../../components/ui/Modal'
 import RadioOption from '../../components/ui/RadioOption'
 import { BtnCancel, BtnConfirm } from '../../components/ui/Button'
@@ -15,6 +15,63 @@ const CITIES: { value: City; label: string }[] = [
   { value: 'KHAN',   label: 'Khan Younis' },
   { value: 'RAFAH',  label: 'Rafah'       },
 ]
+
+function CustomSelect({ value, onChange, options, placeholder }: {
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+  placeholder?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [])
+
+  const label = options.find(o => o.value === value)?.label ?? placeholder ?? ''
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between gap-2 border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 transition"
+      >
+        <span className={value ? 'text-gray-700' : 'text-gray-400'}>{label || placeholder}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+          className={`text-gray-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+          {placeholder && (
+            <li>
+              <button type="button" onClick={() => { onChange(''); setOpen(false) }}
+                className={`w-full text-left px-4 py-2 text-sm ${value === '' ? 'bg-teal-600 text-white font-medium' : 'text-gray-400 hover:bg-teal-50'}`}>
+                {placeholder}
+              </button>
+            </li>
+          )}
+          {options.map(opt => (
+            <li key={opt.value}>
+              <button type="button" onClick={() => { onChange(opt.value); setOpen(false) }}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors ${opt.value === value ? 'bg-teal-600 text-white font-medium' : 'text-gray-700 hover:bg-teal-50'}`}>
+                {opt.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 function generateTempPassword() {
   return 'Temp@' + Math.random().toString(36).slice(-8)
@@ -69,26 +126,22 @@ export default function AddEmployeeModal({ onClose }: { onClose: () => void }) {
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
-          <select
+          <CustomSelect
             value={sectionId}
-            onChange={e => setSectionId(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-600 bg-white outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition"
-          >
-            <option value=""></option>
-            {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+            onChange={setSectionId}
+            options={sections.map(s => ({ value: s.id, label: s.name }))}
+            placeholder="Select section"
+          />
         </div>
         <Input label="Job title" placeholder="" value={jobTitle} onChange={e => setJobTitle(e.target.value)} />
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-          <select
+          <CustomSelect
             value={city}
-            onChange={e => setCity(e.target.value as City | '')}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-600 bg-white outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition"
-          >
-            <option value="">Select city</option>
-            {CITIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-          </select>
+            onChange={v => setCity(v as City | '')}
+            options={CITIES}
+            placeholder="Select city"
+          />
         </div>
       </div>
       <div className="mb-5">

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { NavigateFn } from '../lib/types'
 import { EyeIcon } from '../lib/icons'
 import { useAdminComplaints } from '../services/adminComplaintsService'
@@ -53,7 +53,60 @@ function cmpNumber(id: string) {
   return `CMP-${String(Number(id)).padStart(3, '0')}`
 }
 
-const selectCls = 'border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white'
+function CustomSelect({ value, onChange, options }: {
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [])
+
+  const label = options.find(o => o.value === value)?.label ?? options[0].label
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center justify-between gap-3 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white hover:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500 min-w-[140px]"
+      >
+        <span>{label}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+          className={`text-gray-400 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+          {options.map(opt => (
+            <li key={opt.value}>
+              <button
+                type="button"
+                onClick={() => { onChange(opt.value); setOpen(false) }}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                  opt.value === value
+                    ? 'bg-teal-600 text-white font-medium'
+                    : 'text-gray-700 hover:bg-teal-50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 export default function AdminComplaintsPage({ navigate }: Props) {
   const [status,   setStatus]   = useState('')
@@ -76,15 +129,9 @@ export default function AdminComplaintsPage({ navigate }: Props) {
 
       {/* Filters */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3">
-        <select value={status}   onChange={e => setStatus(e.target.value)}   className={selectCls}>
-          {STATUS_OPTIONS.map(o   => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-        <select value={category} onChange={e => setCategory(e.target.value)} className={selectCls}>
-          {CATEGORY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-        <select value={priority} onChange={e => setPriority(e.target.value)} className={selectCls}>
-          {PRIORITY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+        <CustomSelect value={status}   onChange={setStatus}   options={STATUS_OPTIONS}   />
+        <CustomSelect value={category} onChange={setCategory} options={CATEGORY_OPTIONS} />
+        <CustomSelect value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
         {(status || category || priority) && (
           <button
             onClick={() => { setStatus(''); setCategory(''); setPriority('') }}
