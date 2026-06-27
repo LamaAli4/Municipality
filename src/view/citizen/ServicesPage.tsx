@@ -1,22 +1,26 @@
 import { useState } from 'react'
 import type { CitizenNavigateFn } from '../../lib/types'
 import { useServices } from '../../services/servicesService'
+import PageWrapper from '../../components/ui/PageWrapper'
 
 interface Props { navigate: CitizenNavigateFn }
 
-const categories = ['All', 'Infrastructure', 'Water', 'Electricity', 'Roads', 'Buildings']
-
 export default function ServicesPage({ navigate }: Props) {
-  const [activeCategory, setActiveCategory] = useState('All')
+  const [activeTab, setActiveTab] = useState('All')
   const [search, setSearch] = useState('')
   const { data: services = [], isLoading, isError } = useServices()
 
-  const filtered = services.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase())
-  )
+  const tabs = ['All', ...services.map(s => s.name)]
+
+  const filtered = services.filter(s => {
+    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase())
+    const matchTab    = activeTab === 'All' || s.name === activeTab
+    return matchSearch && matchTab
+  })
 
   return (
-    <div className="space-y-6">
+    <PageWrapper>
+    <div className="space-y-5">
       <div>
         <h1 className="text-xl font-bold text-gray-800">Services</h1>
         <p className="text-sm text-gray-500">Browse and apply for available government services</p>
@@ -35,18 +39,18 @@ export default function ServicesPage({ navigate }: Props) {
         </svg>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
-        {categories.map(cat => (
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {tabs.map(tab => (
           <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              activeCategory === cat
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap shrink-0 transition-colors ${
+              activeTab === tab
                 ? 'bg-teal-600 text-white'
                 : 'border border-teal-300 text-teal-700 hover:bg-teal-50'
             }`}
           >
-            {cat}
+            {tab}
           </button>
         ))}
       </div>
@@ -59,16 +63,18 @@ export default function ServicesPage({ navigate }: Props) {
       )}
 
       {!isLoading && !isError && (
-        <div className="grid grid-cols-3 gap-4">
-          {filtered.map(service => (
-            <div key={service.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.length === 0 ? (
+            <div className="col-span-full text-center py-16 text-gray-400 text-sm">No services found</div>
+          ) : filtered.map(service => (
+            <div key={service.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow flex flex-col">
+              <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3 shrink-0">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
               </div>
-              <h3 className="font-semibold text-gray-800 mt-2 mb-1">{service.name}</h3>
-              <p className="text-xs text-gray-500 mb-3 line-clamp-2">{service.description}</p>
+              <h3 className="font-semibold text-gray-800 mb-1">{service.name}</h3>
+              <p className="text-xs text-gray-500 mb-3 line-clamp-2 flex-1">{service.description}</p>
               <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
                 <span>{service.estimated_processing_days} days</span>
                 <span>{service.fee === 0 ? 'Free' : `$${service.fee}`}</span>
@@ -82,11 +88,9 @@ export default function ServicesPage({ navigate }: Props) {
               </button>
             </div>
           ))}
-          {filtered.length === 0 && (
-            <div className="col-span-3 text-center py-16 text-gray-400 text-sm">No services found</div>
-          )}
         </div>
       )}
     </div>
+    </PageWrapper>
   )
 }

@@ -10,6 +10,8 @@ export interface Profile {
   address?: string
   city?: string
   national_id?: string
+  employee_id?: string
+  section_id?: string
   role: string
   created_at: string
   last_login_at?: string

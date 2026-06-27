@@ -1,6 +1,7 @@
 import type { CitizenNavigateFn } from '../../lib/types'
 import { ChevronLeftIcon } from '../../lib/icons'
 import { useRequestDetail } from '../../services/requestsService'
+import PageWrapper from '../../components/ui/PageWrapper'
 
 interface Props {
   navigate: CitizenNavigateFn
@@ -48,6 +49,7 @@ export default function RequestDetailPage({ navigate, requestId }: Props) {
   )
 
   return (
+    <PageWrapper>
     <div className="space-y-5">
       <button
         onClick={() => navigate('my-requests')}
@@ -87,12 +89,19 @@ export default function RequestDetailPage({ navigate, requestId }: Props) {
               <p className="font-medium">{fmt(req?.submitted_at ?? req?.created_at)}</p>
             </div>
             <div>
-              <p className="text-teal-200 text-xs mb-0.5">Assigned To</p>
-              <p className="font-medium">{req?.assigned_to?.full_name ?? '—'}</p>
+              <p className="text-teal-200 text-xs mb-0.5">Current Task</p>
+              <p className="font-medium">
+                {req?.tasks?.find(t => t.id === req.current_task_id)?.name ?? '—'}
+              </p>
             </div>
             <div>
-              <p className="text-teal-200 text-xs mb-0.5">Estimated Completion</p>
-              <p className="font-medium">{fmt(req?.estimated_completion_date)}</p>
+              <p className="text-teal-200 text-xs mb-0.5">Payment</p>
+              <p className="font-medium">
+                {req?.payment_status === 'NOT_REQUIRED' ? 'Not Required'
+                  : req?.payment_status === 'PAID'    ? 'Paid'
+                  : req?.payment_status === 'PENDING' ? 'Pending'
+                  : '—'}
+              </p>
             </div>
           </div>
 
@@ -213,5 +222,6 @@ export default function RequestDetailPage({ navigate, requestId }: Props) {
         </div>
       </div>
     </div>
+    </PageWrapper>
   )
 }

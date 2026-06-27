@@ -1,65 +1,136 @@
 import { useState } from 'react'
 import type { EmployeeNavigateFn } from '../../lib/types'
-import { ChevronLeftIcon, ApproveIcon, RefuseIcon, RequestDocsIcon, TransferIcon, WarningIcon } from '../../lib/icons'
+import {
+  ChevronLeftIcon, ApproveIcon, RefuseIcon, RequestDocsIcon, TransferIcon,
+  WarningIcon, UploadIcon,
+} from '../../lib/icons'
 import Modal from '../../components/ui/Modal'
 import { BtnCancel, BtnConfirm } from '../../components/ui/Button'
+import { useTaskDetail, useCompleteTask, useRejectTask } from '../../services/tasksService'
 
-interface Props { navigate: EmployeeNavigateFn }
+interface Props {
+  navigate: EmployeeNavigateFn
+  taskId: string | null
+}
 
-type ProcedureKey = 'approve' | 'refuse' | 'docs' | 'transfer'
+type ProcedureKey = 'approve' | 'refuse' | 'docs' | 'reapply' | 'cancel'
 
-const procedures: { key: ProcedureKey; label: string; color: string; icon: React.ReactNode }[] = [
-  { key: 'approve',   label: 'Approve the task',            color: 'bg-teal-100 text-teal-700 hover:bg-teal-200', icon: <ApproveIcon /> },
-  { key: 'refuse',    label: 'Refuse the task',             color: 'bg-red-100 text-red-700 hover:bg-red-200',   icon: <RefuseIcon /> },
-  { key: 'docs',      label: 'Request for missing documents', color: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200', icon: <RequestDocsIcon /> },
-  { key: 'transfer',  label: 'Send application for other employee', color: 'bg-purple-100 text-purple-700 hover:bg-purple-200', icon: <TransferIcon /> },
+const PROCEDURES: { key: ProcedureKey; label: string; color: string; icon: React.ReactNode }[] = [
+  { key: 'approve',  label: 'Approve the task',                    color: 'bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100',        icon: <ApproveIcon /> },
+  { key: 'refuse',   label: 'Refuse the task',                     color: 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100',             icon: <RefuseIcon /> },
+  { key: 'docs',     label: 'Request for missing documents',        color: 'bg-yellow-50 text-yellow-700 border border-yellow-200 hover:bg-yellow-100', icon: <RequestDocsIcon /> },
+  { key: 'reapply',  label: 'Re-application for former employee',   color: 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100',         icon: <TransferIcon /> },
+  { key: 'cancel',   label: 'Cancel assignment',                    color: 'bg-pink-50 text-pink-700 border border-pink-200 hover:bg-pink-100',         icon: <RefuseIcon /> },
 ]
 
-const citizenDocs = [
-  { name: 'Property Deed', status: 'loaded' },
-  { name: 'Architectural Plans', status: 'under review' },
-  { name: 'Owner ID Copy', status: 'loaded' },
-]
+const PROCEDURE_WARNINGS: Record<ProcedureKey, string> = {
+  approve:  'Are you sure you want to approve this task?',
+  refuse:   'Are you sure you want to refuse this task?',
+  docs:     'This will notify the citizen to submit the missing documents.',
+  reapply:  'This will reassign the task to another employee.',
+  cancel:   'Are you sure you want to cancel your assignment for this task?',
+}
 
-const internalDocs = [
-  { name: 'Initial inspection report', status: 'pending' },
-  { name: 'Field site photos', status: 'pending' },
-]
+const STATUS_BADGE: Record<string, string> = {
+  IN_PROGRESS: 'bg-orange-100 text-orange-700',
+  BACKLOG:     'bg-gray-100 text-gray-600',
+  COMPLETED:   'bg-teal-100 text-teal-700',
+  APPROVED:    'bg-teal-100 text-teal-700',
+  FAILED:      'bg-red-100 text-red-700',
+}
 
-export default function TaskDetailPage({ navigate }: Props) {
+function fmt(iso: string | null | undefined) {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`
+}
+
+function fmtStatus(s: string | undefined) {
+  return s?.replace(/_/g, ' ') ?? '—'
+}
+
+function StepDot({ done, active }: { done: boolean; active: boolean }) {
+  if (done) return (
+    <div className="w-7 h-7 rounded-full bg-teal-500 flex items-center justify-center shrink-0">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+  )
+  if (active) return <div className="w-7 h-7 rounded-full border-4 border-teal-500 bg-white shrink-0" />
+  return <div className="w-7 h-7 rounded-full border-2 border-gray-300 bg-white shrink-0" />
+}
+
+export default function TaskDetailPage({ navigate, taskId }: Props) {
   const [activeModal, setActiveModal] = useState<ProcedureKey | null>(null)
+  const { data: task, isLoading } = useTaskDetail(taskId)
+  const { mutate: completeTask, isPending: completing, error: completeErr } = useCompleteTask()
+  const { mutate: rejectTask,   isPending: rejecting,  error: rejectErr  } = useRejectTask()
+
+  function handleApprove() {
+    if (!task) return
+    completeTask(task.id, { onSuccess: () => { setActiveModal(null); navigate('task-board') } })
+  }
+
+  function handleReject(reason: string) {
+    if (!task) return
+    rejectTask({ id: task.id, rejection_reason: reason }, { onSuccess: () => { setActiveModal(null); navigate('task-board') } })
+  }
+
+  if (isLoading) return (
+    <div className="flex items-center justify-center py-20 text-gray-400 text-sm">Loading...</div>
+  )
+
+  const sibling = [...(task?.sibling_tasks ?? [])].sort((a, b) => a.task_order - b.task_order)
+  const totalSteps = sibling.length
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 md:p-6 space-y-5">
+      {/* Back */}
       <button onClick={() => navigate('task-board')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-teal-600">
         <ChevronLeftIcon /> Back To Task board
       </button>
 
+      {/* Title row */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800">Request and task details</h1>
-          <p className="text-sm text-gray-500">Service: Water subscription</p>
+          <p className="text-sm text-gray-500">Service: {task?.request?.service_name ?? '—'}</p>
         </div>
-        <span className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">Under implementation</span>
+        <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${STATUS_BADGE[task?.status ?? ''] ?? 'bg-gray-100 text-gray-600'}`}>
+          {fmtStatus(task?.status)}
+        </span>
       </div>
 
-      {/* Three panel grid */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* 3-column cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
         {/* Request data */}
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <h2 className="font-semibold text-gray-700 text-sm mb-3 pb-2 border-b border-gray-100">Request data</h2>
           <div className="space-y-3 text-sm">
-            {[
-              ['Service type', 'Water subscription'],
-              ['Citizen name', 'Ahmed Muhammad'],
-              ['The address', 'Riyadh, Al-Nakheel'],
-              ['Phone number', '+966 50 123 4567'],
-            ].map(([k, v]) => (
-              <div key={k}>
-                <p className="text-xs text-gray-400">{k}</p>
-                <p className="text-gray-700 font-medium">{v}</p>
+            <div>
+              <p className="text-xs text-gray-400">Service type</p>
+              <p className="text-gray-700 font-medium">{task?.request?.service_name ?? '—'}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-gray-400">Request #</p>
+                <p className="text-gray-700 font-medium">#{task?.request_id ?? '—'}</p>
               </div>
-            ))}
+              <div>
+                <p className="text-xs text-gray-400">Submission date</p>
+                <p className="text-gray-700 font-medium">{fmt(task?.request?.submitted_at)}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-gray-400">Request status</p>
+                <p className="text-gray-700 font-medium">{fmtStatus(task?.request?.status)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Payment</p>
+                <p className="text-gray-700 font-medium">{fmtStatus(task?.request?.payment_status)}</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -67,37 +138,31 @@ export default function TaskDetailPage({ navigate }: Props) {
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <h2 className="font-semibold text-gray-700 text-sm mb-3 pb-2 border-b border-gray-100">Task data</h2>
           <div className="space-y-3 text-sm">
-            {[
-              ['Task number', '# TSK-241'],
-              ['Attribution date', '15/2/2024'],
-              ['Due date', '1/3/2024'],
-              ['Section', 'Water Department'],
-            ].map(([k, v]) => (
-              <div key={k}>
-                <p className="text-xs text-gray-400">{k}</p>
-                <p className="text-gray-700 font-medium">{v}</p>
+            <div>
+              <p className="text-xs text-gray-400">Task name</p>
+              <p className="text-gray-700 font-medium">{task?.name ?? '—'}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-gray-400">Step</p>
+                <p className="text-gray-700 font-medium">
+                  {task ? `${task.task_order} of ${totalSteps}` : '—'}
+                </p>
               </div>
-            ))}
-          </div>
-
-          <div className="mt-4 bg-teal-50 border border-teal-200 rounded-lg p-3">
-            <p className="text-xs text-gray-400 mb-1">Task documents</p>
-            <p className="text-sm text-teal-700 font-medium">Reviewing documents</p>
-          </div>
-
-          <div className="mt-3 space-y-2">
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-3 h-3 rounded-full bg-teal-500" />
-              <span className="text-gray-600">Started</span>
-              <span className="text-gray-400 ml-auto">15/2/2024</span>
+              <div>
+                <p className="text-xs text-gray-400">Est. hours</p>
+                <p className="text-gray-700 font-medium">{task ? `${task.estimated_time_hours}h` : '—'}</p>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-3 h-3 rounded-full bg-teal-500" />
-              <span className="text-gray-600">Application received</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-3 h-3 rounded-full bg-teal-500" />
-              <span className="text-gray-600">Documents review</span>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-gray-400">Assigned at</p>
+                <p className="text-gray-700 font-medium">{fmt(task?.assigned_at)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Completed at</p>
+                <p className="text-gray-700 font-medium">{fmt(task?.completed_at)}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -106,11 +171,11 @@ export default function TaskDetailPage({ navigate }: Props) {
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <h2 className="font-semibold text-gray-700 text-sm mb-3 pb-2 border-b border-gray-100">Available procedures</h2>
           <div className="space-y-2">
-            {procedures.map(proc => (
+            {PROCEDURES.map(proc => (
               <button
                 key={proc.key}
                 onClick={() => setActiveModal(proc.key)}
-                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${proc.color}`}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${proc.color}`}
               >
                 {proc.icon}
                 {proc.label}
@@ -120,115 +185,161 @@ export default function TaskDetailPage({ navigate }: Props) {
         </div>
       </div>
 
-      {/* Document panels */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <h2 className="font-semibold text-gray-700 text-sm mb-3 text-center">Citizen documents</h2>
-          <div className="space-y-2">
-            {citizenDocs.map(doc => (
-              <div key={doc.name} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${doc.status === 'loaded' ? 'bg-teal-100' : 'bg-yellow-100'}`}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={doc.status === 'loaded' ? '#0d9488' : '#f59e0b'} strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      {/* Task description + stepper */}
+      {sibling.length > 0 && (
+        <div className="bg-teal-800 rounded-xl p-5 text-white">
+          <h2 className="font-semibold text-sm mb-1">Task description</h2>
+          <p className="text-teal-200 text-sm mb-5">{task?.name}</p>
+
+          {/* Horizontal stepper */}
+          <div className="flex items-center mb-5 overflow-x-auto pb-1">
+            {sibling.map((t, i) => {
+              const done   = t.status === 'COMPLETED' || t.status === 'APPROVED'
+              const active = t.id === task?.id
+              return (
+                <div key={t.id} className="flex items-center">
+                  <div className="flex flex-col items-center gap-1.5 min-w-20 text-center">
+                    <StepDot done={done} active={active} />
+                    <span className={`text-xs leading-tight ${active ? 'text-white font-semibold' : done ? 'text-teal-300' : 'text-teal-500'}`}>
+                      {t.name}
+                    </span>
                   </div>
-                  <span className="text-xs text-gray-700 font-medium">{doc.name}</span>
+                  {i < sibling.length - 1 && (
+                    <div className={`h-0.5 w-10 mx-1 shrink-0 mb-4 ${done ? 'bg-teal-400' : 'bg-teal-700'}`} />
+                  )}
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${doc.status === 'loaded' ? 'bg-teal-100 text-teal-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                  {doc.status}
-                </span>
-              </div>
-            ))}
+              )
+            })}
+          </div>
+
+          {/* Status pills */}
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            {sibling.map(t => {
+              const done   = t.status === 'COMPLETED' || t.status === 'APPROVED'
+              const active = t.id === task?.id
+              return (
+                <div key={t.id} className="flex items-center gap-1.5 text-sm">
+                  {done ? (
+                    <div className="w-5 h-5 rounded-full bg-teal-400 flex items-center justify-center shrink-0">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                  ) : active ? (
+                    <div className="w-5 h-5 rounded-full bg-teal-400 shrink-0" />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full border-2 border-teal-600 shrink-0" />
+                  )}
+                  <span className={done ? 'text-teal-200' : active ? 'text-white font-medium' : 'text-teal-500'}>
+                    {t.name}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
+      )}
 
+      {/* Documents row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <h2 className="font-semibold text-gray-700 text-sm mb-3 text-center">Internal documents</h2>
-          <div className="space-y-2">
-            {internalDocs.map(doc => (
-              <div key={doc.name} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
-                  </div>
-                  <span className="text-xs text-gray-700 font-medium">{doc.name}</span>
-                </div>
-                <button className="text-teal-600">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                </button>
-              </div>
-            ))}
-            <button className="w-full text-center text-xs text-teal-600 py-2 border border-dashed border-teal-300 rounded-lg hover:bg-teal-50">
-              + Upload a new document
-            </button>
-          </div>
+          <h2 className="font-semibold text-gray-700 text-sm mb-3 pb-2 border-b border-gray-100">Citizen documents</h2>
+          <div className="text-center py-6 text-gray-400 text-sm">No documents uploaded</div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <h2 className="font-semibold text-gray-700 text-sm mb-3 pb-2 border-b border-gray-100">Internal documents</h2>
+          <div className="text-center py-4 text-gray-400 text-sm">No internal documents</div>
+          <button className="mt-3 w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-lg py-2.5 text-sm text-gray-500 hover:border-teal-400 hover:text-teal-600 transition-colors">
+            <UploadIcon /> Upload a new document
+          </button>
         </div>
       </div>
 
-      {/* Modals */}
-      {activeModal === 'approve' && (
+      {/* Procedure modals */}
+      {activeModal && (
         <ProcedureModal
-          title="Approve the task"
-          icon={<ApproveIcon />}
-          warning="Are you sure you want to accept this task?"
-          taskNum="# TSK-241"
+          proc={PROCEDURES.find(p => p.key === activeModal)!}
+          warning={PROCEDURE_WARNINGS[activeModal]}
+          taskId={task?.id ?? ''}
+          serviceName={task?.request?.service_name ?? '—'}
+          assignedAt={fmt(task?.assigned_at)}
           onClose={() => setActiveModal(null)}
-        />
-      )}
-      {activeModal === 'refuse' && (
-        <ProcedureModal
-          title="Refuse the task"
-          icon={<RefuseIcon />}
-          warning="Are you sure you want to refuse this task?"
-          taskNum="# TSK-241"
-          onClose={() => setActiveModal(null)}
-        />
-      )}
-      {activeModal === 'docs' && (
-        <ProcedureModal
-          title="Request for missing documents"
-          icon={<RequestDocsIcon />}
-          warning="This will notify the citizen to submit missing documents."
-          taskNum="# TSK-241"
-          onClose={() => setActiveModal(null)}
-        />
-      )}
-      {activeModal === 'transfer' && (
-        <ProcedureModal
-          title="Transfer to other employee"
-          icon={<TransferIcon />}
-          warning="This will reassign the task to another employee."
-          taskNum="# TSK-241"
-          onClose={() => setActiveModal(null)}
+          onApprove={activeModal === 'approve' ? handleApprove : undefined}
+          onReject={activeModal === 'refuse'  ? handleReject  : undefined}
+          isPending={completing || rejecting}
+          apiError={
+            activeModal === 'approve' ? (completeErr as any)?.response?.data?.message :
+            activeModal === 'refuse'  ? (rejectErr  as any)?.response?.data?.message :
+            undefined
+          }
         />
       )}
     </div>
   )
 }
 
-function ProcedureModal({ title, icon, warning, taskNum, onClose }: {
-  title: string; icon: React.ReactNode; warning: string; taskNum: string; onClose: () => void
+function ProcedureModal({ proc, warning, taskId, serviceName, assignedAt, onClose, onApprove, onReject, isPending, apiError }: {
+  proc: typeof PROCEDURES[number]
+  warning: string
+  taskId: string; serviceName: string; assignedAt: string
+  onClose: () => void
+  onApprove?: () => void
+  onReject?: (reason: string) => void
+  isPending?: boolean
+  apiError?: string
 }) {
+  const [notes, setNotes] = useState('')
+
+  function handleConfirm() {
+    if (onApprove) { onApprove(); return }
+    if (onReject)  { onReject(notes); return }
+    onClose()
+  }
+
   return (
-    <Modal title={title} icon={icon} onClose={onClose}>
+    <Modal title={proc.label} icon={proc.icon} onClose={onClose}>
       <div className="border border-gray-200 rounded-xl p-4 mb-4 grid grid-cols-2 gap-3 text-sm">
-        <div><p className="text-xs text-gray-400">Task number</p><p className="font-semibold text-gray-800">{taskNum}</p></div>
-        <div><p className="text-xs text-gray-400">Service</p><p className="font-semibold text-gray-800">Water subscription</p></div>
-        <div><p className="text-xs text-gray-400">Citizen's name</p><p className="font-medium text-gray-700">Ahmed Muhammad</p></div>
-        <div><p className="text-xs text-gray-400">Section</p><p className="font-medium text-gray-700">Water Department</p></div>
-        <div><p className="text-xs text-gray-400">Attribution date</p><p className="font-medium text-gray-700">15/2/2024</p></div>
-        <div><p className="text-xs text-gray-400">due date</p><p className="font-medium text-gray-700">1/3/2024</p></div>
+        <div>
+          <p className="text-xs text-gray-400">Task ID</p>
+          <p className="font-semibold text-gray-800">#{taskId}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-400">Service</p>
+          <p className="font-semibold text-gray-800">{serviceName}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-400">Assigned at</p>
+          <p className="font-medium text-gray-700">{assignedAt}</p>
+        </div>
       </div>
+
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-2 mb-4">
         <WarningIcon />
         <p className="text-sm text-amber-800">{warning}</p>
       </div>
+
+      {apiError && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">{apiError}</p>
+      )}
+
       <div className="mb-4">
-        <label className="text-sm font-medium text-gray-700">Notes (optional)</label>
-        <textarea rows={3} placeholder="Add any notes related to the task..." className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none" />
+        <label className="text-sm font-medium text-gray-700">
+          {onReject ? <>Rejection reason <span className="text-red-500">*</span></> : 'Notes (optional)'}
+        </label>
+        <textarea
+          rows={3}
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          placeholder={onReject ? 'Enter the reason for rejection...' : 'Add any notes related to the task...'}
+          className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+        />
       </div>
+
       <div className="flex justify-between">
         <BtnCancel onClick={onClose} />
-        <BtnConfirm label="Confirm" onClick={onClose} />
+        <BtnConfirm
+          label={isPending ? 'Please wait...' : 'Confirm'}
+          onClick={handleConfirm}
+          disabled={isPending || (!!onReject && !notes.trim())}
+        />
       </div>
     </Modal>
   )

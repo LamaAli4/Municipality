@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { CitizenNavigateFn } from '../../lib/types'
 import { useComplaints } from '../../services/complaintsService'
 import { EyeIcon } from '../../lib/icons'
+import PageWrapper from '../../components/ui/PageWrapper'
 
 interface Props { navigate: CitizenNavigateFn }
 
@@ -69,6 +70,7 @@ export default function ComplaintsPage({ navigate }: Props) {
   const filtered = filter === 'All' ? mapped : mapped.filter(c => c.label === filter)
 
   return (
+    <PageWrapper>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -171,5 +173,6 @@ export default function ComplaintsPage({ navigate }: Props) {
         </div>
       )}
     </div>
+    </PageWrapper>
   )
 }

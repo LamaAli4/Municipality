@@ -1,6 +1,57 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useMyProfile, useUpdateProfile, useUpdatePassword } from '../../services/profileService'
 import PageWrapper from '../../components/ui/PageWrapper'
+
+const CITIES = [
+  { value: 'GAZA',   label: 'Gaza' },
+  { value: 'NORTH',  label: 'North Gaza' },
+  { value: 'MIDDLE', label: 'Middle Area' },
+  { value: 'KHAN',   label: 'Khan Younis' },
+  { value: 'RAFAH',  label: 'Rafah' },
+]
+
+function CitySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [])
+
+  const label = CITIES.find(c => c.value === value)?.label
+
+  return (
+    <div ref={ref} className="relative mt-1">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+      >
+        <span className={label ? 'text-gray-700' : 'text-gray-400'}>{label ?? 'Select city'}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+          className={`text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      {open && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+          {CITIES.map(c => (
+            <li key={c.value}>
+              <button type="button" onClick={() => { onChange(c.value); setOpen(false) }}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${c.value === value ? 'bg-teal-600 text-white font-medium' : 'text-gray-700 hover:bg-teal-50'}`}>
+                {c.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 function initials(name: string) {
   return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()
@@ -76,7 +127,10 @@ export default function CitizenAccountPage() {
             <Field label="National ID" value={profile?.national_id ?? ''} readOnly />
           </div>
           <Field label="Phone number" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} />
-          <Field label="City" value={form.city} onChange={v => setForm(f => ({ ...f, city: v }))} />
+          <div>
+            <label className="text-xs text-gray-500">City</label>
+            <CitySelect value={form.city} onChange={v => setForm(f => ({ ...f, city: v }))} />
+          </div>
           <div className="col-span-2">
             <Field label="Address" value={form.address} onChange={v => setForm(f => ({ ...f, address: v }))} />
           </div>

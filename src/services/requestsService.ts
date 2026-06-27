@@ -1,5 +1,19 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axiosInstance from '../lib/axios'
+
+interface SubmitDocumentInput {
+  required_document_id: string
+  file_name: string
+  file_type: string
+  file_url: string
+  file_id: string
+  file_path: string
+}
+
+interface SubmitRequestPayload {
+  service_id: string
+  documents: SubmitDocumentInput[]
+}
 
 export interface ApiRequest {
   id: string
@@ -42,6 +56,8 @@ export interface RequestDetail {
   service_name?: string
   service?: { name: string; fee?: number }
   status: string
+  payment_status?: string
+  current_task_id?: string
   submitted_at?: string
   created_at: string
   notes?: string
@@ -63,6 +79,17 @@ export function useMyRequests() {
   return useQuery<ApiRequest[]>({
     queryKey: ['requests'],
     queryFn: () => axiosInstance.get('/requests').then(r => r.data.data),
+  })
+}
+
+export function useSubmitRequest() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: SubmitRequestPayload) =>
+      axiosInstance.post('/requests', data).then(r => r.data.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['requests'] })
+    },
   })
 }
 

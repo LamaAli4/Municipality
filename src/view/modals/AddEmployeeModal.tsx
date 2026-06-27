@@ -7,6 +7,7 @@ import { AddUserIcon, SaveIcon } from '../../lib/icons'
 import { useSections } from '../../services/sectionsService'
 import { useCreateEmployee } from '../../services/adminService'
 import type { City } from '../../services/adminService'
+import { toast } from 'react-toastify'
 
 const CITIES: { value: City; label: string }[] = [
   { value: 'GAZA',   label: 'Gaza'        },
@@ -92,17 +93,23 @@ export default function AddEmployeeModal({ onClose }: { onClose: () => void }) {
 
   async function handleSave() {
     if (!fullName.trim() || !email.trim()) return
-    await createEmployee.mutateAsync({
-      full_name:   fullName,
-      email,
-      password:    generateTempPassword(),
-      phone:       phone      || undefined,
-      employee_id: employeeId || undefined,
-      section_id:  sectionId || undefined,
-      city:        city      || undefined,
-      role,
-    })
-    onClose()
+    const fullEmpId = employeeId.trim() ? `EMP-${employeeId.trim()}` : undefined
+    try {
+      await createEmployee.mutateAsync({
+        full_name:   fullName,
+        email,
+        password:    generateTempPassword(),
+        phone:       phone     || undefined,
+        employee_id: fullEmpId,
+        section_id:  sectionId || undefined,
+        city:        city      || undefined,
+        role,
+      })
+      onClose()
+    } catch (err: any) {
+      const msg = err?.response?.data?.message
+      if (msg) toast.error(msg)
+    }
   }
 
   return (
@@ -114,7 +121,19 @@ export default function AddEmployeeModal({ onClose }: { onClose: () => void }) {
       </div>
       <div className="grid grid-cols-2 gap-4 mb-5">
         <Input label="Full Name"     placeholder="Enter full name"       value={fullName}   onChange={e => setFullName(e.target.value)} />
-        <Input label="Job number"    placeholder="Ex: 1002"              value={employeeId} onChange={e => setEmployeeId(e.target.value)} />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Job number</label>
+          <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-teal-500 focus-within:border-teal-500">
+            <span className="px-3 py-2.5 bg-gray-100 text-gray-500 text-sm font-medium border-r border-gray-300 select-none">EMP-</span>
+            <input
+              type="text"
+              placeholder="001"
+              value={employeeId}
+              onChange={e => setEmployeeId(e.target.value.replace(/\D/g, ''))}
+              className="flex-1 px-3 py-2.5 text-sm text-gray-700 outline-none bg-white"
+            />
+          </div>
+        </div>
         <Input label="Email"         placeholder="ex: ahmed@example.com" value={email}      onChange={e => setEmail(e.target.value)} type="email" />
         <Input label="Mobile number" placeholder="05XXXXXXXX"            value={phone}      onChange={e => setPhone(e.target.value)} />
       </div>
@@ -144,13 +163,13 @@ export default function AddEmployeeModal({ onClose }: { onClose: () => void }) {
           />
         </div>
       </div>
-      <div className="mb-5">
+      {/* <div className="mb-5">
         <label className="block text-sm font-medium text-gray-700 mb-2">Authority (Job Role)</label>
         <div className="flex gap-6">
           <RadioOption label="employee"           checked={role === 'EMPLOYEE'}           onChange={() => setRole('EMPLOYEE')} />
           <RadioOption label="Department manager" checked={role === 'DEPARTMENT_MANAGER'} onChange={() => setRole('DEPARTMENT_MANAGER')} />
         </div>
-      </div>
+      </div> */}
 
       {/* ── Account settings ─────────────────────────────── */}
       <div className="border-l-4 border-primary pl-3 mb-3">

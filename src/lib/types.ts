@@ -14,7 +14,7 @@ export type NavigateFn = (page: Page, params?: Record<string, string>) => void
 export type CitizenPage =
   | 'home' | 'services' | 'service-detail' | 'service-request'
   | 'my-requests' | 'request-detail' | 'complaints' | 'new-complaint' | 'complaint-detail'
-  | 'utility-bills' | 'pay-bill' | 'damage-assessment'
+  | 'utility-bills' | 'pay-bill' | 'damage-assessment' | 'damage-assessment-detail'
   | 'notifications' | 'account'
 
 export type CitizenNavigateFn = (page: CitizenPage, params?: Record<string, string>) => void
@@ -29,7 +29,7 @@ export type ManagerNavigateFn = (page: ManagerPage) => void
 export type EmployeePage =
   | 'task-board' | 'task-detail' | 'notifications' | 'account'
 
-export type EmployeeNavigateFn = (page: EmployeePage) => void
+export type EmployeeNavigateFn = (page: EmployeePage, params?: Record<string, string>) => void
 
 // ── Auth pages ─────────────────────────────────────────────────────
 export type AuthPage =

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { toast } from 'react-toastify'
 import type { CitizenNavigateFn } from '../../lib/types'
 import {
@@ -6,6 +6,7 @@ import {
   useDamageAssessments,
   useCreateAssessment,
 } from '../../services/damageAssessmentService'
+import axiosInstance from '../../lib/axios'
 
 interface Props { navigate: CitizenNavigateFn }
 
@@ -30,8 +31,8 @@ const DAMAGE_LEVELS = [
     idle: 'border-gray-200 hover:border-green-300',
   },
   {
-    value: 'AVERAGE',
-    label: 'Average',
+    value: 'MODERATE',
+    label: 'Moderate',
     desc: 'Wall cracks, damage to services',
     color: 'border-yellow-400 bg-yellow-50 text-yellow-700',
     dot: 'bg-yellow-500',
@@ -40,15 +41,7 @@ const DAMAGE_LEVELS = [
   {
     value: 'SEVERE',
     label: 'Severe',
-    desc: 'Partial collapse, damage to services',
-    color: 'border-orange-400 bg-orange-50 text-orange-700',
-    dot: 'bg-orange-500',
-    idle: 'border-gray-200 hover:border-orange-300',
-  },
-  {
-    value: 'TOTAL_COLLAPSE',
-    label: 'Total collapse',
-    desc: 'Uninhabitable, complete destruction',
+    desc: 'Partial collapse or complete destruction',
     color: 'border-red-400 bg-red-50 text-red-700',
     dot: 'bg-red-500',
     idle: 'border-gray-200 hover:border-red-300',
@@ -119,15 +112,14 @@ function OtherIcon() {
 
 // ── Already submitted view ─────────────────────────────────────────────────────
 
-function AlreadySubmitted({ assessments }: { assessments: ReturnType<typeof useDamageAssessments>['data'] }) {
+function AlreadySubmitted({ assessments, navigate }: { assessments: ReturnType<typeof useDamageAssessments>['data'], navigate: CitizenNavigateFn }) {
   const dmgLabel: Record<string, string> = {
-    MINOR: 'Minor', AVERAGE: 'Average', SEVERE: 'Severe', TOTAL_COLLAPSE: 'Total collapse',
+    MINOR: 'Minor', MODERATE: 'Moderate', SEVERE: 'Severe',
   }
   const dmgColor: Record<string, string> = {
-    MINOR: 'bg-green-100 text-green-700',
-    AVERAGE: 'bg-yellow-100 text-yellow-700',
-    SEVERE: 'bg-orange-100 text-orange-700',
-    TOTAL_COLLAPSE: 'bg-red-100 text-red-700',
+    MINOR:    'bg-green-100 text-green-700',
+    MODERATE: 'bg-yellow-100 text-yellow-700',
+    SEVERE:   'bg-red-100 text-red-700',
   }
 
   return (
@@ -148,18 +140,27 @@ function AlreadySubmitted({ assessments }: { assessments: ReturnType<typeof useD
       {assessments && assessments.length > 0 && (
         <div className="space-y-3">
           {assessments.map(a => (
-            <div key={a.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <button
+              key={a.id}
+              onClick={() => navigate('damage-assessment-detail', { assessmentId: String(a.id) })}
+              className="w-full text-left bg-white rounded-xl border border-gray-100 shadow-sm p-5 hover:border-teal-300 hover:shadow-md transition-all"
+            >
               <div className="flex items-center justify-between mb-3">
                 <span className="font-semibold text-gray-800 capitalize">
                   {(a.property_type ?? '').replace(/_/g, ' ').toLowerCase()}
                 </span>
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${dmgColor[a.damage_level] ?? 'bg-gray-100 text-gray-600'}`}>
-                  {dmgLabel[a.damage_level] ?? a.damage_level}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${dmgColor[a.damage_severity] ?? dmgColor[a.damage_level] ?? 'bg-gray-100 text-gray-600'}`}>
+                    {dmgLabel[a.damage_severity] ?? dmgLabel[a.damage_level] ?? a.damage_severity ?? a.damage_level}
+                  </span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </div>
               </div>
-              <p className="text-sm text-gray-500">{GOV_LABEL[a.governorate] ?? a.governorate}{a.area ? ` • ${a.area}` : ''}{a.street ? ` • ${a.street}` : ''}</p>
-              {a.description && <p className="text-sm text-gray-600 mt-2">{a.description}</p>}
-            </div>
+              <p className="text-sm text-gray-500">{a.location ?? ''}</p>
+              {a.description && <p className="text-sm text-gray-600 mt-2 line-clamp-2">{a.description}</p>}
+            </button>
           ))}
         </div>
       )}
@@ -174,46 +175,79 @@ export default function DamageAssessmentPage({ navigate: _navigate }: Props) {
   const { data: assessments } = useDamageAssessments()
   const { mutate: submit, isPending } = useCreateAssessment()
 
-  const [propertyType,     setPropertyType]     = useState('')
-  const [damageLevel,      setDamageLevel]      = useState('')
-  const [governorate,      setGovernorate]      = useState('GAZA')
-  const [area,             setArea]             = useState('')
-  const [street,           setStreet]           = useState('')
-  const [structural,       setStructural]       = useState<string[]>([])
-  const [services,         setServices]         = useState<string[]>([])
-  const [description,      setDescription]      = useState('')
+  const [propertyType,  setPropertyType]  = useState('')
+  const [damageLevel,   setDamageLevel]   = useState('')
+  const [governorate,   setGovernorate]   = useState('GAZA')
+  const [area,          setArea]          = useState('')
+  const [street,        setStreet]        = useState('')
+  const [structural,    setStructural]    = useState<string[]>([])
+  const [services,      setServices]      = useState<string[]>([])
+  const [description,   setDescription]   = useState('')
+  const [imageFiles,    setImageFiles]    = useState<File[]>([])
+  const [uploading,     setUploading]     = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   function toggleList(list: string[], setList: (v: string[]) => void, val: string) {
     setList(list.includes(val) ? list.filter(x => x !== val) : [...list, val])
   }
 
-  function handleSubmit() {
-    if (!propertyType) { toast.error('Please select a property type'); return }
-    if (!damageLevel)  { toast.error('Please select a damage level');  return }
+  async function uploadToImageKit(file: File) {
+    const { data: authResp } = await axiosInstance.get('/auth/imagekit/upload-auth')
+    const auth = authResp.data
+    const form = new FormData()
+    form.append('file', file)
+    form.append('fileName', file.name)
+    form.append('token', auth.token)
+    form.append('expire', String(auth.expire))
+    form.append('signature', auth.signature)
+    form.append('publicKey', auth.publicKey)
+    form.append('folder', '/damage-assessments')
+    const res = await fetch('https://upload.imagekit.io/api/v1/files/upload', { method: 'POST', body: form })
+    const json = await res.json()
+    return {
+      file_name: json.name,
+      file_url:  json.url,
+      file_id:   json.fileId,
+      file_type: file.type,
+    }
+  }
 
-    submit(
-      {
-        property_type:      propertyType,
-        damage_level:       damageLevel,
-        governorate,
-        area:               area || undefined,
-        street:             street || undefined,
-        structural_damage:  structural.length ? structural.map(s => s.toUpperCase()) : undefined,
-        service_damage:     services.length   ? services.map(s => s.toUpperCase())   : undefined,
-        description:        description || undefined,
-      },
-      {
-        onSuccess: () => toast.success('Assessment submitted successfully'),
-        onError:   () => toast.error('Failed to submit assessment'),
-      }
-    )
+  async function handleSubmit() {
+    if (!propertyType)         { toast.error('Please select a property type'); return }
+    if (!damageLevel)          { toast.error('Please select a damage level');  return }
+    if (!description.trim())   { toast.error('Please add a description');      return }
+    if (imageFiles.length < 1) { toast.error('Please upload at least 1 image'); return }
+
+    setUploading(true)
+    try {
+      const imageUrls = await Promise.all(imageFiles.map(uploadToImageKit))
+      const location  = [GOV_LABEL[governorate] ?? governorate, area, street].filter(Boolean).join(', ')
+
+      submit(
+        {
+          property_type:   propertyType,
+          damage_severity: damageLevel,
+          location,
+          description,
+          images:          imageUrls,
+        },
+        {
+          onSuccess: () => toast.success('Assessment submitted successfully'),
+          onError:   (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to submit assessment'),
+        }
+      )
+    } catch {
+      toast.error('Failed to upload images')
+    } finally {
+      setUploading(false)
+    }
   }
 
   if (loadingStatus) return (
     <div className="flex items-center justify-center py-20 text-gray-400 text-sm">Loading...</div>
   )
 
-  if (status?.has_submitted) return <AlreadySubmitted assessments={assessments} />
+  if (status?.has_submitted) return <AlreadySubmitted assessments={assessments} navigate={_navigate} />
 
   return (
     <div className="space-y-5">
@@ -399,46 +433,49 @@ export default function DamageAssessmentPage({ navigate: _navigate }: Props) {
 
           {/* Pictures & documents */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h2 className="font-semibold text-gray-800 mb-4">Pictures and documents</h2>
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              {[
-                { label: 'Image (mandatory)', accept: 'image/*',  icon: 'image',  required: true  },
-                { label: 'Image (mandatory)', accept: 'image/*',  icon: 'image',  required: true  },
-                { label: 'Image (mandatory)', accept: 'image/*',  icon: 'image',  required: true  },
-                { label: 'Image (optional)',  accept: 'image/*',  icon: 'image',  required: false },
-                { label: 'Video (optional)',  accept: 'video/*',  icon: 'video',  required: false },
-                { label: 'File (optional)',   accept: '.pdf',     icon: 'file',   required: false },
-              ].map((slot, i) => (
-                <label
-                  key={i}
-                  className="border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:border-teal-400 hover:bg-teal-50 transition-colors py-4"
-                >
-                  <input type="file" accept={slot.accept} className="hidden" />
-                  {slot.icon === 'image' && (
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="1.5">
-                      <rect x="3" y="3" width="18" height="18" rx="2"/>
-                      <circle cx="8.5" cy="8.5" r="1.5"/>
-                      <polyline points="21 15 16 10 5 21"/>
-                    </svg>
-                  )}
-                  {slot.icon === 'video' && (
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5">
-                      <path d="M15 10l4.553-2.069A1 1 0 0121 8.869v6.262a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
-                    </svg>
-                  )}
-                  {slot.icon === 'file' && (
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5">
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                    </svg>
-                  )}
-                  <span className={`text-[10px] font-medium ${slot.required ? 'text-teal-600' : 'text-gray-400'}`}>
-                    {slot.label}
-                  </span>
-                </label>
-              ))}
-            </div>
-            <p className="text-[10px] text-gray-400">Allowed file types: JPG, PNG, MP4. Maximum file size: 20 MB.</p>
+            <h2 className="font-semibold text-gray-800 mb-1">Pictures <span className="text-red-500">*</span></h2>
+            <p className="text-xs text-gray-400 mb-3">At least 1 image required</p>
+
+            {/* Selected images preview */}
+            {imageFiles.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {imageFiles.map((f, i) => (
+                  <div key={i} className="relative group">
+                    <img
+                      src={URL.createObjectURL(f)}
+                      alt=""
+                      className="w-full h-20 object-cover rounded-lg border border-gray-200"
+                    />
+                    <button
+                      onClick={() => setImageFiles(p => p.filter((_, j) => j !== i))}
+                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <label className="border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-teal-400 hover:bg-teal-50 transition-colors py-5">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={e => {
+                  const files = Array.from(e.target.files ?? [])
+                  setImageFiles(p => [...p, ...files])
+                  e.target.value = ''
+                }}
+              />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <span className="text-xs font-medium text-teal-600">Click to add images</span>
+            </label>
+            <p className="text-[10px] text-gray-400 mt-2">Allowed: JPG, PNG. Max 20 MB each.</p>
           </div>
 
           {/* Additional description */}
@@ -466,11 +503,11 @@ export default function DamageAssessmentPage({ navigate: _navigate }: Props) {
 
         <button
           onClick={handleSubmit}
-          disabled={isPending}
+          disabled={isPending || uploading}
           className="flex items-center gap-2 px-8 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-60 transition-opacity"
           style={{ background: 'linear-gradient(135deg, #0d9488, #0a7569)' }}
         >
-          {isPending ? 'Submitting...' : 'Submit'}
+          {uploading ? 'Uploading...' : isPending ? 'Submitting...' : 'Submit'}
           {!isPending && (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
               <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>

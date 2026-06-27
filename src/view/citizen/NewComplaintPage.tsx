@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import type { CitizenNavigateFn } from '../../lib/types'
 import { ChevronLeftIcon } from '../../lib/icons'
 import { useCreateComplaint } from '../../services/complaintsService'
 import axiosInstance from '../../lib/axios'
+import PageWrapper from '../../components/ui/PageWrapper'
 
 interface Props { navigate: CitizenNavigateFn }
 
@@ -22,6 +23,63 @@ const PRIORITIES = [
 ]
 
 const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 text-gray-700 placeholder-gray-400'
+
+function CustomSelect({ value, onChange, options, placeholder }: {
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+  placeholder?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [])
+
+  const label = options.find(o => o.value === value)?.label
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition"
+      >
+        <span className={label ? 'text-gray-700' : 'text-gray-400'}>{label ?? placeholder}</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+          className={`text-gray-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+          {placeholder && (
+            <li>
+              <button type="button" onClick={() => { onChange(''); setOpen(false) }}
+                className={`w-full text-left px-4 py-2.5 text-sm ${!value ? 'bg-teal-600 text-white font-medium' : 'text-gray-400 hover:bg-teal-50'}`}>
+                {placeholder}
+              </button>
+            </li>
+          )}
+          {options.map(opt => (
+            <li key={opt.value}>
+              <button type="button" onClick={() => { onChange(opt.value); setOpen(false) }}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${opt.value === value ? 'bg-teal-600 text-white font-medium' : 'text-gray-700 hover:bg-teal-50'}`}>
+                {opt.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 async function uploadPhoto(file: File) {
   const auth = await axiosInstance.get('/auth/imagekit/upload-auth').then(r => r.data.data)
@@ -105,6 +163,7 @@ export default function NewComplaintPage({ navigate }: Props) {
   const busy = isPending || isUploading
 
   return (
+    <PageWrapper>
     <div className="space-y-5">
       <button
         onClick={() => navigate('complaints')}
@@ -134,16 +193,20 @@ export default function NewComplaintPage({ navigate }: Props) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">Category</label>
-            <select value={category} onChange={e => setCategory(e.target.value)} className={inputCls}>
-              <option value="">Select category</option>
-              {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
+            <CustomSelect
+              value={category}
+              onChange={setCategory}
+              options={CATEGORIES}
+              placeholder="Select category"
+            />
           </div>
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">Priority</label>
-            <select value={priority} onChange={e => setPriority(e.target.value)} className={inputCls}>
-              {PRIORITIES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-            </select>
+            <CustomSelect
+              value={priority}
+              onChange={setPriority}
+              options={PRIORITIES}
+            />
           </div>
         </div>
 
@@ -224,5 +287,6 @@ export default function NewComplaintPage({ navigate }: Props) {
         </div>
       </div>
     </div>
+    </PageWrapper>
   )
 }

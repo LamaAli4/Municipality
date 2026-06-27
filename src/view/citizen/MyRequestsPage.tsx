@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { CitizenNavigateFn } from '../../lib/types'
 import { EyeIcon } from '../../lib/icons'
 import { useMyRequests } from '../../services/requestsService'
+import PageWrapper from '../../components/ui/PageWrapper'
 
 interface Props { navigate: CitizenNavigateFn }
 
@@ -71,6 +72,7 @@ export default function MyRequestsPage({ navigate }: Props) {
   const filtered = filter === 'All' ? mapped : mapped.filter(r => r.status === filter)
 
   return (
+    <PageWrapper>
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-gray-800">My Requests</h1>
@@ -157,5 +159,6 @@ export default function MyRequestsPage({ navigate }: Props) {
         </div>
       )}
     </div>
+    </PageWrapper>
   )
 }

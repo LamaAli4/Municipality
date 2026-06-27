@@ -1,6 +1,7 @@
 import type { CitizenNavigateFn } from '../../lib/types'
 import { ChevronLeftIcon } from '../../lib/icons'
 import { useServiceDetail } from '../../services/servicesService'
+import PageWrapper from '../../components/ui/PageWrapper'
 
 interface Props {
   navigate: CitizenNavigateFn
@@ -11,6 +12,7 @@ export default function ServiceDetailPage({ navigate, serviceId }: Props) {
   const { data: service, isLoading, isError } = useServiceDetail(serviceId)
 
   return (
+    <PageWrapper>
     <div className="space-y-6">
       <button onClick={() => navigate('services')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-teal-600">
         <ChevronLeftIcon /> Back To Services
@@ -102,5 +104,6 @@ export default function ServiceDetailPage({ navigate, serviceId }: Props) {
         </>
       )}
     </div>
+    </PageWrapper>
   )
 }

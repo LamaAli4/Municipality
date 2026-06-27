@@ -12,10 +12,10 @@ interface Props {
 }
 
 const ROLE_OPTIONS: { value: Role; label: string }[] = [
-  { value: 'citizen',            label: 'Citizen'            },
-  { value: 'admin',              label: 'System Admin'       },
-  { value: 'department_manager', label: 'Department Manager' },
-  { value: 'employee',           label: 'Employee'           },
+  { value: 'citizen',  label: 'Citizen'      },
+  { value: 'admin',    label: 'System Admin' },
+  // { value: 'department_manager', label: 'Department Manager' },
+  { value: 'employee', label: 'Employee'     },
 ]
 
 function RoleSelect({ value, onChange }: { value: Role; onChange: (r: Role) => void }) {

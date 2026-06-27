@@ -1,6 +1,7 @@
 import type { CitizenNavigateFn } from '../../lib/types'
 import { ChevronLeftIcon } from '../../lib/icons'
 import { useComplaintDetail } from '../../services/complaintsService'
+import PageWrapper from '../../components/ui/PageWrapper'
 
 interface Props {
   navigate: CitizenNavigateFn
@@ -45,6 +46,7 @@ export default function ComplaintDetailPage({ navigate, complaintId }: Props) {
   )
 
   return (
+    <PageWrapper>
     <div className="space-y-5">
       <button
         onClick={() => navigate('complaints')}
@@ -148,5 +150,6 @@ export default function ComplaintDetailPage({ navigate, complaintId }: Props) {
         </div>
       )}
     </div>
+    </PageWrapper>
   )
 }

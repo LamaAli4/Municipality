@@ -7,6 +7,7 @@ export interface Service {
   name: string
   description: string
   department_id: string
+  department?: { id: string; name: string }
   fee: number
   estimated_processing_days: number
   status: string

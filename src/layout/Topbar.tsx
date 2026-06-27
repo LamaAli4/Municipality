@@ -1,11 +1,17 @@
-import { BellIcon } from '../lib/icons'
+import { useMyProfile } from '../services/profileService'
 
 interface Props {
   onLogout?: () => void
   onMenuClick?: () => void
 }
 
+function initials(name: string) {
+  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+}
+
 export default function Topbar({ onLogout, onMenuClick }: Props) {
+  const { data: profile } = useMyProfile()
+
   return (
     <div className="h-14 flex items-center justify-between gap-4 px-4 md:px-6 shrink-0" style={{ background: '#0d3a47' }}>
       {/* Hamburger — mobile only */}
@@ -24,9 +30,11 @@ export default function Topbar({ onLogout, onMenuClick }: Props) {
       {/* Right side */}
       <div className="flex items-center gap-3 ml-auto">
         <div className="w-8 h-8 bg-teal-400 rounded-full flex items-center justify-center text-white text-xs font-bold">
-          AM
+          {profile ? initials(profile.full_name) : '…'}
         </div>
-        <span className="text-white font-medium text-sm hidden sm:block">Admin Muhammad</span>
+        <span className="text-white font-medium text-sm hidden sm:block">
+          {profile?.full_name ?? '…'}
+        </span>
         {onLogout && (
           <button onClick={onLogout} className="text-teal-300 text-xs hover:text-white underline ml-1">
             Logout

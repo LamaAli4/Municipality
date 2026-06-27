@@ -10,11 +10,13 @@ export interface Department {
   _count?: { sections: number }
 }
 
-export function useDepartments() {
+export function useDepartments(opts?: { activeOnly?: boolean }) {
+  const activeOnly = opts?.activeOnly ?? true
   return useQuery<Department[]>({
-    queryKey: ['departments'],
+    queryKey: ['departments', activeOnly],
     queryFn: () =>
-      axiosInstance.get('/departments', { params: { activeOnly: true } }).then(r => r.data.data),
+      axiosInstance.get('/departments', { params: activeOnly ? { activeOnly: true } : undefined }).then(r => r.data.data),
+    retry: false,
   })
 }
 
