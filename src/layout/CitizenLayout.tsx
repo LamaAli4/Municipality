@@ -69,7 +69,7 @@ function NavItem({
       <span className="shrink-0"><item.Icon /></span>
       {!collapsed && (
         <>
-          <span className="flex-1 text-left whitespace-nowrap overflow-hidden">{item.label}</span>
+          <span className="flex-1 text-left whitespace-nowrap">{item.label}</span>
           <span className="shrink-0"><ChevronRightIcon /></span>
         </>
       )}
@@ -128,7 +128,7 @@ export default function CitizenLayout({ current, navigate, onLogout, children }:
       )}
 
       {/* Mobile drawer */}
-      <div className={`fixed top-0 left-0 h-full w-56 z-50 transform transition-transform duration-300 md:hidden ${
+      <div className={`fixed top-0 left-0 h-full w-60 z-50 transform transition-transform duration-300 md:hidden ${
         mobileOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <SidebarContent current={current} navigate={navigate} collapsed={false} onClose={() => setMobileOpen(false)} />
@@ -140,7 +140,7 @@ export default function CitizenLayout({ current, navigate, onLogout, children }:
       </div>
 
       {/* Desktop: full sidebar */}
-      <div className="hidden lg:flex w-56 shrink-0 flex-col h-screen">
+      <div className="hidden lg:flex w-60 shrink-0 flex-col h-screen">
         <SidebarContent current={current} navigate={navigate} collapsed={false} onClose={() => {}} />
       </div>
 
