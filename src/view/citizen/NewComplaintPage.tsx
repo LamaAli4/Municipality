@@ -134,7 +134,7 @@ export default function NewComplaintPage({ navigate }: Props) {
     if (!category)           { toast.error('Please select a category');        return }
     if (!description.trim()) { toast.error('Please enter a description');      return }
 
-    let photo: object | undefined
+    let photo: { file_name: string; file_type: string; file_url: string; file_id: string; file_path: string } | undefined
     if (photoFile) {
       try {
         setIsUploading(true)

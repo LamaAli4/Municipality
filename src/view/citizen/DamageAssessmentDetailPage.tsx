@@ -29,7 +29,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   PENDING:   { label: 'Pending',   color: 'bg-yellow-100 text-yellow-600' },
   APPROVED:  { label: 'Approved',  color: 'bg-teal-100 text-teal-700' },
   REJECTED:  { label: 'Rejected',  color: 'bg-red-100 text-red-600' },
-  REVIEWED:  { label: 'Reviewed',  color: 'bg-blue-100 text-blue-600' },
+  REVIEWED:     { label: 'Reviewed',     color: 'bg-blue-100 text-blue-600' },
+  UNDER_REVIEW: { label: 'Under Review', color: 'bg-purple-100 text-purple-600' },
 }
 
 function fmt(iso?: string | null) {
@@ -59,7 +60,7 @@ export default function DamageAssessmentDetailPage({ navigate, assessmentId }: P
     <div className="flex items-center justify-center py-20 text-gray-400 text-sm">Assessment not found</div>
   )
 
-  const propertyLabel = PROPERTY_LABEL[assessment.property_type] ?? assessment.property_type ?? '—'
+  const propertyLabel = PROPERTY_LABEL[assessment.property_type ?? ''] ?? assessment.property_type ?? '—'
   const severity      = SEVERITY_CONFIG[assessment.damage_severity]
   const status        = STATUS_CONFIG[assessment.status ?? ''] ?? { label: assessment.status ?? 'Unknown', color: 'bg-gray-100 text-gray-600' }
   const images        = (assessment.images ?? []) as (DamageAssessmentImageResponse | string)[]
@@ -152,7 +153,18 @@ export default function DamageAssessmentDetailPage({ navigate, assessmentId }: P
                         src={getImageUrl(img)}
                         alt={getImageName(img, i)}
                         className="w-full h-28 object-cover rounded-lg border border-gray-200 group-hover:opacity-90 transition-opacity"
+                        onError={e => {
+                          const t = e.currentTarget
+                          t.onerror = null
+                          t.style.display = 'none'
+                          const placeholder = t.nextElementSibling as HTMLElement | null
+                          if (placeholder) placeholder.style.display = 'flex'
+                        }}
                       />
+                      <div className="hidden w-full h-28 rounded-lg border border-gray-200 bg-gray-100 items-center justify-center flex-col gap-1">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span className="text-xs text-gray-400">{getImageName(img, i)}</span>
+                      </div>
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-lg transition-colors flex items-center justify-center">
                         <svg className="opacity-0 group-hover:opacity-100 transition-opacity" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                           <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>

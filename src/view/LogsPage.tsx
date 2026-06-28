@@ -58,7 +58,7 @@ export default function LogsPage() {
             ))}
           </tbody>
         </table>
-        <Pagination />
+        <Pagination current={1} total={1} onChange={() => {}} />
       </div>
     </div>
   )

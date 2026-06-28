@@ -74,13 +74,13 @@ export default function EditEmployeeModal({ user, onClose }: { user: AdminUser; 
       </div>
 
       {/* ── Authority ────────────────────────────────────── */}
-      <div className="mb-4">
+      {/* <div className="mb-4">
         <p className="text-sm font-medium text-gray-700 mb-2">Authority (Job Role)</p>
         <div className="flex gap-6">
           <RadioOption label="employee"           checked={role === 'EMPLOYEE'}            onChange={() => setRole('EMPLOYEE')} />
           <RadioOption label="Department manager" checked={role === 'DEPARTMENT_MANAGER'}  onChange={() => setRole('DEPARTMENT_MANAGER')} />
         </div>
-      </div>
+      </div> */}
 
       {/* ── Warning ──────────────────────────────────────── */}
       <div className="flex items-start gap-2 bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-2 text-xs text-yellow-700">

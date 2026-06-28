@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { forwardRef, isValidElement, Children, cloneElement } from 'react'
+import type { ReactNode, ButtonHTMLAttributes, ReactElement } from 'react'
 
 interface BtnProps {
   onClick?: () => void
@@ -7,6 +8,27 @@ interface BtnProps {
   className?: string
   disabled?: boolean
 }
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  asChild?: boolean
+}
+
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ children, className = '', asChild, ...props }, ref) => {
+    if (asChild && isValidElement(children)) {
+      const child = Children.only(children) as ReactElement<{ className?: string }>
+      return cloneElement(child, {
+        className: [child.props.className, className].filter(Boolean).join(' '),
+      })
+    }
+    return (
+      <button ref={ref} className={className} {...props}>
+        {children}
+      </button>
+    )
+  }
+)
+Button.displayName = 'Button'
 
 export function BtnCancel({ onClick, label = 'Cancel' }: BtnProps) {
   return (

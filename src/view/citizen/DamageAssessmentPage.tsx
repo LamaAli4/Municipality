@@ -150,8 +150,8 @@ function AlreadySubmitted({ assessments, navigate }: { assessments: ReturnType<t
                   {(a.property_type ?? '').replace(/_/g, ' ').toLowerCase()}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${dmgColor[a.damage_severity] ?? dmgColor[a.damage_level] ?? 'bg-gray-100 text-gray-600'}`}>
-                    {dmgLabel[a.damage_severity] ?? dmgLabel[a.damage_level] ?? a.damage_severity ?? a.damage_level}
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${dmgColor[a.damage_severity] ?? 'bg-gray-100 text-gray-600'}`}>
+                    {dmgLabel[a.damage_severity] ?? a.damage_severity}
                   </span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round">
                     <polyline points="9 18 15 12 9 6"/>

@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import ProtectedRoute from "./ProtectedRoute";
-import MainLayout from "@/layout/MainLayout";
 
 import Login from "@/view/auth/screens/login";
 import Register from "@/view/auth/screens/register";
@@ -34,19 +33,6 @@ export default function AppRouter() {
         <Route path={ROUTES.OTP} element={<Otp />} />
         <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
 
-        {/* Protected Routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <MainLayout />
-            </ProtectedRoute>
-          }
-        >
-          {appRoutes.map(({ path, element }) => (
-            <Route key={path} path={path} element={element} />
-          ))}
-        </Route>
       </Routes>
     </BrowserRouter>
   );

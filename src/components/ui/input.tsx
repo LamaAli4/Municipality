@@ -1,36 +1,31 @@
-import type { ReactNode } from 'react'
+import { forwardRef } from 'react'
+import type { ReactNode, InputHTMLAttributes } from 'react'
 
-interface InputProps {
+export type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: string
-  placeholder?: string
-  value?: string
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
-  type?: string
-  readOnly?: boolean
   icon?: ReactNode
 }
 
-export function Input({ label, placeholder, value, onChange, type = 'text', readOnly, icon }: InputProps) {
-  return (
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ label, icon, className = '', readOnly, ...props }, ref) => (
     <div>
       {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
       <div className="relative">
         <input
-          type={type}
-          placeholder={placeholder}
-          value={value}
-          onChange={onChange}
+          ref={ref}
           readOnly={readOnly}
           className={`w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-600 outline-none
             focus:border-primary focus:ring-1 focus:ring-primary/30 transition
             ${readOnly ? 'bg-gray-50' : 'bg-white'}
-            ${icon ? 'pr-8' : ''}`}
+            ${icon ? 'pr-8' : ''} ${className}`}
+          {...props}
         />
         {icon && <span className="absolute right-2.5 top-2.5 text-primary">{icon}</span>}
       </div>
     </div>
   )
-}
+)
+Input.displayName = 'Input'
 
 interface TextareaProps {
   label?: string

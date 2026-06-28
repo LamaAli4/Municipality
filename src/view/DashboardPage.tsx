@@ -73,7 +73,7 @@ export default function DashboardPage({ navigate }: { navigate: NavigateFn }) {
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v: number) => [v, 'Complaints']} />
+                <Tooltip formatter={(v) => [v, 'Complaints']} />
                 <Legend iconType="circle" iconSize={10} />
               </PieChart>
             </ResponsiveContainer>
