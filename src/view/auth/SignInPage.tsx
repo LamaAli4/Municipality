@@ -96,7 +96,8 @@ export default function SignInPage({ navigate }: Props) {
       // Auth is handled by authStore automatically
     } catch (err) {
       if (err instanceof ZodError) {
-        toast.error(err.issues[0].message)
+        const identifierIssue = err.issues.find(i => i.path[0] === 'identifier')
+        toast.error((identifierIssue ?? err.issues[0]).message)
       } else if (err instanceof Error) {
         toast.error(err.message)
       }

@@ -1,9 +1,33 @@
 import { z } from 'zod'
 
 export const signInSchema = z.object({
-  identifier: z.string().min(1, 'Identifier is required'),
+  identifier: z.string(),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   role: z.enum(['citizen', 'admin', 'department_manager', 'employee']),
+}).superRefine((data, ctx) => {
+  const id = data.identifier.trim()
+  if (!id) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['identifier'],
+      message: data.role === 'citizen' ? 'National ID is required' : 'Employee ID is required',
+    })
+    return
+  }
+  if (data.role === 'employee' && !/^EMP-\d{3}$/.test(id)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['identifier'],
+      message: 'Employee ID must be in the format EMP-XXX (e.g. EMP-001)',
+    })
+  }
+  if (data.role === 'admin' && !/^EMP-ADMIN-\d{3}$/.test(id)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['identifier'],
+      message: 'Admin ID must be in the format EMP-ADMIN-XXX (e.g. EMP-ADMIN-001)',
+    })
+  }
 })
 
 export const signUpSchema = z.object({

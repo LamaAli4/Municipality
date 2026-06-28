@@ -11,9 +11,9 @@ import type { AdminUser } from '../../services/adminService'
 export default function EditEmployeeModal({ user, onClose }: { user: AdminUser; onClose: () => void }) {
   const [sectionId, setSectionId] = useState(user.section_id ?? '')
   const [jobTitle,  setJobTitle]  = useState('')
-  const [role, setRole] = useState<'EMPLOYEE' | 'DEPARTMENT_MANAGER'>(
-    user.role === 'DEPARTMENT_MANAGER' ? 'DEPARTMENT_MANAGER' : 'EMPLOYEE'
-  )
+  // const [role, setRole] = useState<'EMPLOYEE' | 'DEPARTMENT_MANAGER'>(
+  //   user.role === 'DEPARTMENT_MANAGER' ? 'DEPARTMENT_MANAGER' : 'EMPLOYEE'
+  // )
 
   const { data: sections = [] } = useSections()
   const updateEmployee = useUpdateEmployee()
@@ -22,7 +22,6 @@ export default function EditEmployeeModal({ user, onClose }: { user: AdminUser; 
     await updateEmployee.mutateAsync({
       id:         user.id,
       section_id: sectionId || undefined,
-      role,
     })
     onClose()
   }
