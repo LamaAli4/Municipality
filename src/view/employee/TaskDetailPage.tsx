@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { toast } from 'react-toastify'
 import type { EmployeeNavigateFn } from '../../lib/types'
 import {
   ChevronLeftIcon, ApproveIcon, RefuseIcon, RequestDocsIcon, TransferIcon,
@@ -6,8 +7,8 @@ import {
 } from '../../lib/icons'
 import Modal from '../../components/ui/Modal'
 import { BtnCancel, BtnConfirm } from '../../components/ui/Button'
-import { useTaskDetail, useCompleteTask, useRejectTask } from '../../services/tasksService'
-import { useRequestDocuments } from '../../services/requestsService'
+import { useTaskDetail, useCompleteTask, useRejectTask, useUploadTaskDocument } from '../../services/tasksService'
+import axiosInstance from '../../lib/axios'
 
 interface Props {
   navigate: EmployeeNavigateFn
@@ -17,11 +18,8 @@ interface Props {
 type ProcedureKey = 'approve' | 'refuse' | 'docs' | 'reapply' | 'cancel'
 
 const PROCEDURES: { key: ProcedureKey; label: string; color: string; icon: React.ReactNode }[] = [
-  { key: 'approve',  label: 'Approve the task',                    color: 'bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100',        icon: <ApproveIcon /> },
-  { key: 'refuse',   label: 'Refuse the task',                     color: 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100',             icon: <RefuseIcon /> },
-  { key: 'docs',     label: 'Request for missing documents',        color: 'bg-yellow-50 text-yellow-700 border border-yellow-200 hover:bg-yellow-100', icon: <RequestDocsIcon /> },
-  { key: 'reapply',  label: 'Re-application for former employee',   color: 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100',         icon: <TransferIcon /> },
-  { key: 'cancel',   label: 'Cancel assignment',                    color: 'bg-pink-50 text-pink-700 border border-pink-200 hover:bg-pink-100',         icon: <RefuseIcon /> },
+  { key: 'approve', label: 'Approve the task', color: 'bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100', icon: <ApproveIcon /> },
+  { key: 'refuse',  label: 'Refuse the task',  color: 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100',     icon: <RefuseIcon />  },
 ]
 
 const PROCEDURE_WARNINGS: Record<ProcedureKey, string> = {
@@ -60,12 +58,55 @@ function StepDot({ done, active }: { done: boolean; active: boolean }) {
   return <div className="w-7 h-7 rounded-full border-2 border-gray-300 bg-white shrink-0" />
 }
 
+async function uploadToImageKit(file: File) {
+  const auth = await axiosInstance.get('/auth/imagekit/upload-auth').then(r => r.data.data)
+  const form = new FormData()
+  form.append('file', file)
+  form.append('fileName', file.name)
+  form.append('publicKey', auth.publicKey)
+  form.append('signature', auth.signature)
+  form.append('expire', String(auth.expire))
+  form.append('token', auth.token)
+  form.append('folder', '/tasks')
+  const res = await fetch('https://upload.imagekit.io/api/v1/files/upload', { method: 'POST', body: form })
+  if (!res.ok) throw new Error('Upload failed')
+  const data = await res.json() as { url: string; fileId: string; filePath: string }
+  return { file_url: data.url, file_id: data.fileId, file_path: data.filePath }
+}
+
 export default function TaskDetailPage({ navigate, taskId }: Props) {
   const [activeModal, setActiveModal] = useState<ProcedureKey | null>(null)
+  const [uploading, setUploading]     = useState(false)
+  const docInputRef = useRef<HTMLInputElement | null>(null)
+
   const { data: task, isLoading } = useTaskDetail(taskId)
-  const { data: citizenDocs = [], isError: docsError } = useRequestDocuments(task?.request_id)
+  const citizenDocs  = (task?.documents ?? []).filter(d => d.category === 'CITIZEN_UPLOADED')
+  const internalDocs = (task?.documents ?? []).filter(d => d.category !== 'CITIZEN_UPLOADED')
+
   const { mutate: completeTask, isPending: completing, error: completeErr } = useCompleteTask()
   const { mutate: rejectTask,   isPending: rejecting,  error: rejectErr  } = useRejectTask()
+  const { mutateAsync: uploadDoc } = useUploadTaskDocument()
+
+  async function handleDocUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !task) return
+    if (file.type !== 'application/pdf') {
+      toast.error('Only PDF files are allowed')
+      e.target.value = ''
+      return
+    }
+    try {
+      setUploading(true)
+      const uploaded = await uploadToImageKit(file)
+      await uploadDoc({ id: task.id, file_name: file.name, file_type: file.type, ...uploaded })
+      toast.success('Document uploaded successfully')
+    } catch {
+      toast.error('Failed to upload document')
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
 
   function handleApprove() {
     if (!task) return
@@ -246,9 +287,7 @@ export default function TaskDetailPage({ navigate, taskId }: Props) {
           <h2 className="font-semibold text-gray-700 text-sm mb-3 pb-2 border-b border-gray-100">
             <span className="text-teal-600">Citizen</span> documents
           </h2>
-          {docsError ? (
-            <div className="text-center py-6 text-gray-400 text-sm">Documents not available</div>
-          ) : citizenDocs.length === 0 ? (
+          {citizenDocs.length === 0 ? (
             <div className="text-center py-6 text-gray-400 text-sm">No documents uploaded</div>
           ) : (
             <ul className="space-y-2">
@@ -278,10 +317,37 @@ export default function TaskDetailPage({ navigate, taskId }: Props) {
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <h2 className="font-semibold text-gray-700 text-sm mb-3 pb-2 border-b border-gray-100">Internal documents</h2>
-          <div className="text-center py-4 text-gray-400 text-sm">No internal documents</div>
-          <button className="mt-3 w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-lg py-2.5 text-sm text-gray-500 hover:border-teal-400 hover:text-teal-600 transition-colors">
-            <UploadIcon /> Upload a new document
+          {internalDocs.length === 0 ? (
+            <div className="text-center py-4 text-gray-400 text-sm">No internal documents</div>
+          ) : (
+            <ul className="space-y-2 mb-3">
+              {internalDocs.map(doc => (
+                <li key={doc.id} className="flex items-center justify-between gap-3 border border-gray-100 rounded-lg px-3 py-2.5 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-teal-500 shrink-0">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    <span className="text-sm text-gray-700 truncate">{doc.name}</span>
+                  </div>
+                  {doc.file_url && (
+                    <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
+                      className="shrink-0 text-xs font-medium text-teal-600 hover:text-teal-800">
+                      View
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          <button
+            disabled={uploading}
+            onClick={() => docInputRef.current?.click()}
+            className="mt-1 w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-lg py-2.5 text-sm text-gray-500 hover:border-teal-400 hover:text-teal-600 disabled:opacity-50 transition-colors"
+          >
+            <UploadIcon /> {uploading ? 'Uploading...' : 'Upload a new document'}
           </button>
+          <input ref={docInputRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={handleDocUpload} />
         </div>
       </div>
 

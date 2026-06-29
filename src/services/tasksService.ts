@@ -22,6 +22,15 @@ export interface KanbanBoard {
   failed:      BoardTask[]
 }
 
+export interface TaskDocument {
+  id: string
+  request_id: string
+  name: string
+  file_type: string
+  file_url: string
+  category: string
+}
+
 export interface TaskDetail extends BoardTask {
   request: {
     id: string
@@ -33,6 +42,7 @@ export interface TaskDetail extends BoardTask {
     current_task_id: string
   }
   sibling_tasks: BoardTask[]
+  documents: TaskDocument[]
 }
 
 export function useTaskBoard() {
@@ -73,5 +83,14 @@ export function useRejectTask() {
     mutationFn: ({ id, rejection_reason }: { id: string; rejection_reason: string }) =>
       axiosInstance.put(`/tasks/${id}/reject`, { rejection_reason }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks', 'board'] }),
+  })
+}
+
+export function useUploadTaskDocument() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string; file_name: string; file_type: string; file_url: string; file_id: string; file_path: string }) =>
+      axiosInstance.post(`/tasks/${id}/documents`, body).then(r => r.data),
+    onSuccess: (_data, { id }) => qc.invalidateQueries({ queryKey: ['task', id] }),
   })
 }
