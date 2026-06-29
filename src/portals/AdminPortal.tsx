@@ -11,12 +11,14 @@ export default function AdminPortal({ onLogout }: Props) {
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null)
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
   const [selectedComplaintId, setSelectedComplaintId] = useState<string | null>(null)
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null)
 
   function navigate(target: Page, params?: Record<string, string>) {
-    if (params?.userId)      setSelectedUserId(params.userId)
+    if (params?.userId)       setSelectedUserId(params.userId)
     if (params?.departmentId) setSelectedDepartmentId(params.departmentId)
-    if (params?.serviceId)   setSelectedServiceId(params.serviceId)
-    if (params?.complaintId) setSelectedComplaintId(params.complaintId)
+    if (params?.serviceId)    setSelectedServiceId(params.serviceId)
+    if (params?.complaintId)  setSelectedComplaintId(params.complaintId)
+    if (params?.assessmentId) setSelectedAssessmentId(params.assessmentId)
     setPage(target)
   }
 
@@ -29,6 +31,7 @@ export default function AdminPortal({ onLogout }: Props) {
         selectedDepartmentId={selectedDepartmentId}
         selectedServiceId={selectedServiceId}
         selectedComplaintId={selectedComplaintId}
+        selectedAssessmentId={selectedAssessmentId}
       />
     </MainLayout>
   )

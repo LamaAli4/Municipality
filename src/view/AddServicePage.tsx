@@ -83,7 +83,7 @@ function CustomSelect({ value, onChange, options, placeholder, disabled }: {
       </button>
 
       {open && !disabled && (
-        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-auto">
           {placeholder && (
             <li>
               <button type="button" onClick={() => { onChange(''); setOpen(false) }}
@@ -191,8 +191,8 @@ export default function AddServicePage({ navigate }: { navigate: NavigateFn }) {
 
       <div className="grid grid-cols-3 gap-4">
         {/* Basic Info */}
-        <div className="col-span-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-          <div className="bg-gray-100 px-5 py-3 border-b border-gray-200">
+        <div className="col-span-2 bg-white border border-gray-200 rounded-xl shadow-sm">
+          <div className="bg-gray-100 px-5 py-3 border-b border-gray-200 rounded-t-xl">
             <h2 className="font-bold text-gray-800">Basic service information</h2>
           </div>
           <div className="p-5 space-y-4">

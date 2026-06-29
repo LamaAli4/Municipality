@@ -6,29 +6,41 @@ import PageWrapper from '../../components/ui/PageWrapper'
 
 interface Props { navigate: CitizenNavigateFn }
 
-type Filter = 'All' | 'In process' | 'Complete' | 'Rejected'
+type Filter = 'All' | 'In process' | 'Under Review' | 'Complete' | 'Rejected'
 
-const STATUS_LABEL: Record<string, Filter> = {
+const STATUS_FILTER: Record<string, Filter> = {
   SUBMITTED:    'In process',
-  UNDER_REVIEW: 'In process',
+  UNDER_REVIEW: 'Under Review',
   PENDING:      'In process',
   RESOLVED:     'Complete',
   REJECTED:     'Rejected',
   CLOSED:       'Complete',
 }
 
-const badgeColors: Record<Filter, string> = {
-  'All':        '',
-  'In process': 'bg-orange-100 text-orange-600',
-  'Complete':   'bg-teal-100 text-teal-700',
-  'Rejected':   'bg-red-100 text-red-600',
+const STATUS_DISPLAY: Record<string, string> = {
+  SUBMITTED:    'Submitted',
+  UNDER_REVIEW: 'Under Review',
+  PENDING:      'Pending',
+  RESOLVED:     'Resolved',
+  REJECTED:     'Rejected',
+  CLOSED:       'Closed',
+}
+
+const STATUS_BADGE_COLOR: Record<string, string> = {
+  SUBMITTED:    'bg-orange-100 text-orange-600',
+  UNDER_REVIEW: 'bg-purple-100 text-purple-700',
+  PENDING:      'bg-orange-100 text-orange-600',
+  RESOLVED:     'bg-teal-100 text-teal-700',
+  REJECTED:     'bg-red-100 text-red-600',
+  CLOSED:       'bg-gray-100 text-gray-600',
 }
 
 const borderColors: Record<Filter, string> = {
-  'All':        'border-l-gray-300',
-  'In process': 'border-l-orange-400',
-  'Complete':   'border-l-teal-500',
-  'Rejected':   'border-l-red-400',
+  'All':          'border-l-gray-300',
+  'In process':   'border-l-orange-400',
+  'Under Review': 'border-l-purple-400',
+  'Complete':     'border-l-teal-500',
+  'Rejected':     'border-l-red-400',
 }
 
 const iconBg = ['bg-teal-600', 'bg-cyan-500', 'bg-emerald-500', 'bg-indigo-500', 'bg-purple-500']
@@ -63,7 +75,7 @@ export default function ComplaintsPage({ navigate }: Props) {
     .sort((a, b) => Number(a.id) - Number(b.id))
     .map((c, idx) => ({
       ...c,
-      label: (STATUS_LABEL[c.status] ?? 'In process') as Filter,
+      label: (STATUS_FILTER[c.status] ?? 'In process') as Filter,
       idx,
     }))
 
@@ -92,7 +104,7 @@ export default function ComplaintsPage({ navigate }: Props) {
 
       {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap">
-        {(['All', 'In process', 'Complete', 'Rejected'] as Filter[]).map(f => (
+        {(['All', 'In process', 'Under Review', 'Complete', 'Rejected'] as Filter[]).map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -155,8 +167,8 @@ export default function ComplaintsPage({ navigate }: Props) {
 
                   {/* Status + button */}
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${badgeColors[c.label]}`}>
-                      {c.label}
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_BADGE_COLOR[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                      {STATUS_DISPLAY[c.status] ?? c.status}
                     </span>
                     <button
                       onClick={() => navigate('complaint-detail', { complaintId: c.id })}

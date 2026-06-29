@@ -10,6 +10,8 @@ import AddServicePage   from '../view/AddServicePage'
 import ServiceDetailPage from '../view/ServiceDetailPage'
 import AdminComplaintsPage from '../view/AdminComplaintsPage'
 import AdminComplaintDetailPage from '../view/AdminComplaintDetailPage'
+import AdminDamageAssessmentsPage from '../view/AdminDamageAssessmentsPage'
+import AdminDamageAssessmentDetailPage from '../view/AdminDamageAssessmentDetailPage'
 // import LogsPage from '../view/LogsPage'
 import NotificationsPage from '../view/NotificationsPage'
 import AccountPage      from '../view/AccountPage'
@@ -22,9 +24,10 @@ interface RouterProps {
   selectedDepartmentId?: string | null
   selectedServiceId?: string | null
   selectedComplaintId?: string | null
+  selectedAssessmentId?: string | null
 }
 
-export default function Router({ page, navigate, selectedUserId, selectedDepartmentId, selectedServiceId, selectedComplaintId }: RouterProps) {
+export default function Router({ page, navigate, selectedUserId, selectedDepartmentId, selectedServiceId, selectedComplaintId, selectedAssessmentId }: RouterProps) {
   switch (page) {
     case 'dashboard':         return <DashboardPage navigate={navigate} />
     case 'citizens':          return <CitizensPage navigate={navigate} />
@@ -36,7 +39,9 @@ export default function Router({ page, navigate, selectedUserId, selectedDepartm
     case 'add-service':       return <AddServicePage navigate={navigate} />
     case 'service-detail':    return <ServiceDetailPage navigate={navigate} serviceId={selectedServiceId ?? null} />
     case 'complaints':        return <AdminComplaintsPage navigate={navigate} />
-    case 'complaint-detail':  return <AdminComplaintDetailPage navigate={navigate} complaintId={selectedComplaintId ?? null} />
+    case 'complaint-detail':         return <AdminComplaintDetailPage navigate={navigate} complaintId={selectedComplaintId ?? null} />
+    case 'damage-assessments':       return <AdminDamageAssessmentsPage navigate={navigate} />
+    case 'damage-assessment-detail': return <AdminDamageAssessmentDetailPage navigate={navigate} assessmentId={selectedAssessmentId ?? null} />
     // case 'logs': return <LogsPage />
     case 'notifications':     return <NotificationsPage />
     case 'account':           return <AccountPage />

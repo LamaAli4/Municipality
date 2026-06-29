@@ -6,6 +6,7 @@ export type Page =
   | 'dashboard' | 'citizens' | 'citizen-detail' | 'staff'
   | 'department' | 'sections' | 'service' | 'add-service' | 'service-detail'
   | 'complaints' | 'complaint-detail'
+  | 'damage-assessments' | 'damage-assessment-detail'
   | 'logs' | 'notifications' | 'account' | 'login'
 
 export type NavigateFn = (page: Page, params?: Record<string, string>) => void

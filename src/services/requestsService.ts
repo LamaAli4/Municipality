@@ -13,6 +13,14 @@ interface SubmitDocumentInput {
 interface SubmitRequestPayload {
   service_id: string
   documents: SubmitDocumentInput[]
+  payment?: {
+    serial_number: string
+    provider: string
+    file_type: string
+    file_url: string
+    file_id: string
+    file_path: string
+  }
 }
 
 export interface ApiRequest {
@@ -97,6 +105,29 @@ export function useAdminRequests() {
   return useQuery<ApiRequest[]>({
     queryKey: ['admin', 'requests'],
     queryFn: () => axiosInstance.get('/admin/requests').then(r => r.data.data),
+    retry: false,
+  })
+}
+
+export function useSubmitPayment() {
+  return useMutation({
+    mutationFn: ({ requestId, ...data }: {
+      requestId: string
+      serial_number: string
+      provider: string
+      file_type: string
+      file_url: string
+      file_id: string
+      file_path: string
+    }) => axiosInstance.post(`/service-requests/${requestId}/payments`, data).then(r => r.data),
+  })
+}
+
+export function useRequestDocuments(requestId: string | null | undefined) {
+  return useQuery<EmbeddedDocument[]>({
+    queryKey: ['request', requestId, 'documents'],
+    queryFn: () => axiosInstance.get(`/requests/${requestId}/documents`).then(r => r.data.data),
+    enabled: !!requestId,
     retry: false,
   })
 }

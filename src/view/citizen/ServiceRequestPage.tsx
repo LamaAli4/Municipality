@@ -3,7 +3,7 @@ import { toast } from 'react-toastify'
 import type { CitizenNavigateFn } from '../../lib/types'
 import { ChevronLeftIcon, UploadIcon, ArrowRightIcon } from '../../lib/icons'
 import { useServiceDetail } from '../../services/servicesService'
-import { useSubmitRequest } from '../../services/requestsService'
+import { useSubmitRequest, useSubmitPayment } from '../../services/requestsService'
 import PageWrapper from '../../components/ui/PageWrapper'
 import axiosInstance from '../../lib/axios'
 
@@ -28,17 +28,21 @@ async function uploadFile(file: File) {
   return { file_url: data.url, file_id: data.fileId, file_path: data.filePath }
 }
 
-const paymentMethods = ['Credit / Debit Card', 'Bank Transfer', 'Online Banking']
+const PROVIDERS = ['Jawwal Pay', 'PalPay', 'Bank Transfer']
 
 export default function ServiceRequestPage({ navigate, serviceId }: Props) {
   const { data: service, isLoading } = useServiceDetail(serviceId)
   const submitRequest = useSubmitRequest()
+  const submitPayment = useSubmitPayment()
 
-  const [step, setStep]           = useState(1)
-  const [files, setFiles]         = useState<Record<string, File>>({})
-  const [uploading, setUploading] = useState(false)
-  const [payMethod, setPayMethod] = useState('Credit / Debit Card')
-  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const [step, setStep]               = useState(1)
+  const [files, setFiles]             = useState<Record<string, File>>({})
+  const [uploading, setUploading]     = useState(false)
+  const [provider, setProvider]       = useState(PROVIDERS[0])
+  const [serialNumber, setSerialNumber] = useState('')
+  const [receiptFile, setReceiptFile] = useState<File | null>(null)
+  const fileRefs   = useRef<Record<string, HTMLInputElement | null>>({})
+  const receiptRef = useRef<HTMLInputElement | null>(null)
 
   const isPaid = (service?.fee ?? 0) > 0
   const totalSteps = isPaid ? 2 : 1
@@ -67,6 +71,12 @@ export default function ServiceRequestPage({ navigate, serviceId }: Props) {
 
   async function handleSubmit() {
     if (!serviceId || !service) return
+
+    if (isPaid) {
+      if (!serialNumber.trim()) { toast.error('Please enter the transfer number'); return }
+      if (!receiptFile)         { toast.error('Please upload the payment receipt'); return }
+    }
+
     try {
       setUploading(true)
       const documents = await Promise.all(
@@ -75,7 +85,19 @@ export default function ServiceRequestPage({ navigate, serviceId }: Props) {
           return { required_document_id: docId, file_name: file.name, file_type: file.type, ...uploaded }
         })
       )
-      await submitRequest.mutateAsync({ service_id: serviceId, documents })
+
+      let payment: Parameters<typeof submitRequest.mutateAsync>[0]['payment'] = undefined
+      if (isPaid && receiptFile) {
+        const uploaded = await uploadFile(receiptFile)
+        payment = {
+          serial_number: serialNumber.trim(),
+          provider,
+          file_type: receiptFile.type,
+          ...uploaded,
+        }
+      }
+
+      await submitRequest.mutateAsync({ service_id: serviceId, documents, payment })
       toast.success('Request submitted successfully')
       navigate('my-requests')
     } catch (err: unknown) {
@@ -86,7 +108,7 @@ export default function ServiceRequestPage({ navigate, serviceId }: Props) {
     }
   }
 
-  const busy = uploading || submitRequest.isPending
+  const busy = uploading || submitRequest.isPending || submitPayment.isPending
 
   return (
     <PageWrapper>
@@ -195,62 +217,90 @@ export default function ServiceRequestPage({ navigate, serviceId }: Props) {
             <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
               <div>
                 <h2 className="font-semibold text-gray-800">Payment</h2>
-                <p className="text-sm text-gray-500">Complete your payment to submit the request</p>
+                <p className="text-sm text-gray-500">Complete payment and upload your receipt</p>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-4">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-600">{service.name} fee</span>
-                  <span className="font-medium">${service.fee}.00</span>
+              {/* Fee summary */}
+              <div className="bg-gray-50 rounded-xl p-4 flex justify-between items-center">
+                <div>
+                  <p className="text-xs text-gray-400">Service Fee</p>
+                  <p className="text-sm font-medium text-gray-700">{service.name}</p>
                 </div>
-                <div className="border-t border-gray-200 mt-3 pt-3 flex justify-between font-bold">
-                  <span>Total</span>
-                  <span className="text-teal-600">${service.fee}.00</span>
-                </div>
+                <span className="text-lg font-bold text-teal-600">${service.fee}.00</span>
               </div>
 
+              {/* Transfer number */}
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Payment Method</p>
-                <div className="space-y-2">
-                  {paymentMethods.map(m => (
-                    <label key={m} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${payMethod === m ? 'border-teal-500 bg-teal-50' : 'border-gray-200'}`}>
-                      <input type="radio" checked={payMethod === m} onChange={() => setPayMethod(m)} className="accent-teal-600" />
-                      <span className="text-sm text-gray-700">{m}</span>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                  Transfer Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. TXN123456789"
+                  value={serialNumber}
+                  onChange={e => setSerialNumber(e.target.value)}
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              {/* Provider */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                  Payment Method <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-3">
+                  {PROVIDERS.map(p => (
+                    <label key={p} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border cursor-pointer text-sm font-medium transition-colors ${provider === p ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-gray-200 text-gray-600 hover:border-teal-300'}`}>
+                      <input type="radio" className="hidden" checked={provider === p} onChange={() => setProvider(p)} />
+                      {p}
                     </label>
                   ))}
                 </div>
               </div>
 
-              {payMethod === 'Credit / Debit Card' && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm text-gray-600">Card Number</label>
-                    <input type="text" placeholder="0000 0000 0000 0000" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-sm text-gray-600">Expiry Date</label>
-                      <input type="text" placeholder="MM/YY" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-600">CVV</label>
-                      <input type="text" placeholder="000" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
-                    </div>
-                  </div>
+              {/* Receipt upload */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                  Upload Payment Receipt <span className="text-red-500">*</span>
+                </label>
+                <div
+                  onClick={() => receiptRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-5 flex flex-col items-center gap-2 cursor-pointer transition-colors ${receiptFile ? 'border-teal-400 bg-teal-50' : 'border-gray-300 hover:border-teal-300'}`}
+                >
+                  {receiptFile ? (
+                    <>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                      <p className="text-sm font-medium text-teal-700">{receiptFile.name}</p>
+                      <p className="text-xs text-teal-500">Click to change</p>
+                    </>
+                  ) : (
+                    <>
+                      <UploadIcon />
+                      <p className="text-sm font-medium text-gray-600">Upload Payment Receipt</p>
+                      <p className="text-xs text-gray-400">PDF, JPG or PNG (max 5MB)</p>
+                    </>
+                  )}
+                  <input
+                    ref={receiptRef}
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,image/jpeg,image/png,application/pdf"
+                    className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) setReceiptFile(f) }}
+                  />
                 </div>
-              )}
+              </div>
 
               <div className="flex gap-3 pt-2">
-                <button onClick={() => setStep(1)} className="px-6 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-600 hover:bg-gray-50">
+                <button onClick={() => setStep(1)} className="px-6 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-600 hover:bg-gray-50">
                   Back
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={busy}
-                  className="flex-1 py-2.5 rounded-lg text-white text-sm font-semibold disabled:opacity-60"
+                  className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-60"
                   style={{ background: 'linear-gradient(135deg, #0d9488, #0a7569)' }}
                 >
-                  {uploading ? 'Uploading...' : submitRequest.isPending ? 'Submitting...' : 'Submit & Pay'}
+                  {uploading ? 'Uploading...' : busy ? 'Submitting...' : 'Submit & Pay'}
                 </button>
               </div>
             </div>

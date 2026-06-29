@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Page, NavigateFn } from '../lib/types'
 import {
   DashboardIcon, CitizensIcon, StaffIcon, DepartmentIcon,
-  ServiceIcon, ComplaintsIcon, AccountIcon, ChevronRightIcon,
+  ServiceIcon, ComplaintsIcon, DamageIcon, AccountIcon, ChevronRightIcon,
 } from '../lib/icons'
 import Logo from '../assets/logo.png'
 
@@ -12,7 +12,8 @@ const navItems = [
   { key: 'staff'      as Page, label: 'Staff management',    Icon: StaffIcon      },
   { key: 'department' as Page, label: 'Department',          Icon: DepartmentIcon },
   { key: 'service'    as Page, label: 'Service management',  Icon: ServiceIcon    },
-  { key: 'complaints' as Page, label: 'Complaints',          Icon: ComplaintsIcon },
+  { key: 'damage-assessments' as Page, label: 'Damage Assessments', Icon: DamageIcon     },
+  { key: 'complaints'        as Page, label: 'Complaints',          Icon: ComplaintsIcon },
   // TODO: System logs — deferred
   // { key: 'logs' as Page, label: 'System logs', Icon: LogsIcon },
 ]
@@ -28,7 +29,8 @@ function isActive(current: Page, itemKey: Page): boolean {
   if (current === 'sections'         && itemKey === 'department')  return true
   if (current === 'add-service'      && itemKey === 'service')     return true
   if (current === 'service-detail'   && itemKey === 'service')     return true
-  if (current === 'complaint-detail' && itemKey === 'complaints')  return true
+  if (current === 'damage-assessment-detail' && itemKey === 'damage-assessments') return true
+  if (current === 'complaint-detail'         && itemKey === 'complaints')         return true
   return false
 }
 
@@ -60,7 +62,7 @@ function NavItem({
       <span className="shrink-0"><item.Icon /></span>
       {!collapsed && (
         <>
-          <span className="flex-1 text-left whitespace-nowrap overflow-hidden">{item.label}</span>
+          <span className="flex-1 text-left whitespace-nowrap">{item.label}</span>
           <span className="shrink-0"><ChevronRightIcon /></span>
         </>
       )}
@@ -122,7 +124,7 @@ export default function Sidebar({ current, navigate, mobileOpen, onClose }: Side
 
       {/* ── Mobile drawer ────────────────────────────────── */}
       <div
-        className={`fixed top-0 left-0 h-full w-56 z-50 transform transition-transform duration-300 md:hidden ${
+        className={`fixed top-0 left-0 h-full w-60 z-50 transform transition-transform duration-300 md:hidden ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -135,7 +137,7 @@ export default function Sidebar({ current, navigate, mobileOpen, onClose }: Side
       </div>
 
       {/* ── Desktop: full sidebar ────────────────────────── */}
-      <div className="hidden lg:flex w-56 shrink-0 flex-col h-screen">
+      <div className="hidden lg:flex w-60 shrink-0 flex-col h-screen">
         <SidebarContent current={current} navigate={navigate} collapsed={false} onClose={() => {}} />
       </div>
     </>

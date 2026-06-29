@@ -20,6 +20,7 @@ export interface WorkflowTask {
   description: string
   task_order: number
   estimated_time_hours: number
+  is_active?: boolean
 }
 
 export interface RequiredDocument {
@@ -173,7 +174,9 @@ export function useServiceDocuments(serviceId: string | null) {
 export function useAdminServiceWorkflow(serviceId: string | null) {
   return useQuery<WorkflowTask[]>({
     queryKey: ['admin', 'service', serviceId, 'workflow'],
-    queryFn: () => axiosInstance.get(`/admin/services/${serviceId}/workflow`).then(r => r.data.data),
+    queryFn: () => axiosInstance.get(`/admin/services/${serviceId}/workflow`).then(r =>
+      (r.data.data as WorkflowTask[]).filter(t => t.is_active !== false)
+    ),
     enabled: !!serviceId,
   })
 }

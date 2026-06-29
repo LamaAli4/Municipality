@@ -7,6 +7,7 @@ import {
 import Modal from '../../components/ui/Modal'
 import { BtnCancel, BtnConfirm } from '../../components/ui/Button'
 import { useTaskDetail, useCompleteTask, useRejectTask } from '../../services/tasksService'
+import { useRequestDocuments } from '../../services/requestsService'
 
 interface Props {
   navigate: EmployeeNavigateFn
@@ -62,6 +63,7 @@ function StepDot({ done, active }: { done: boolean; active: boolean }) {
 export default function TaskDetailPage({ navigate, taskId }: Props) {
   const [activeModal, setActiveModal] = useState<ProcedureKey | null>(null)
   const { data: task, isLoading } = useTaskDetail(taskId)
+  const { data: citizenDocs = [], isError: docsError } = useRequestDocuments(task?.request_id)
   const { mutate: completeTask, isPending: completing, error: completeErr } = useCompleteTask()
   const { mutate: rejectTask,   isPending: rejecting,  error: rejectErr  } = useRejectTask()
 
@@ -241,8 +243,38 @@ export default function TaskDetailPage({ navigate, taskId }: Props) {
       {/* Documents row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <h2 className="font-semibold text-gray-700 text-sm mb-3 pb-2 border-b border-gray-100">Citizen documents</h2>
-          <div className="text-center py-6 text-gray-400 text-sm">No documents uploaded</div>
+          <h2 className="font-semibold text-gray-700 text-sm mb-3 pb-2 border-b border-gray-100">
+            <span className="text-teal-600">Citizen</span> documents
+          </h2>
+          {docsError ? (
+            <div className="text-center py-6 text-gray-400 text-sm">Documents not available</div>
+          ) : citizenDocs.length === 0 ? (
+            <div className="text-center py-6 text-gray-400 text-sm">No documents uploaded</div>
+          ) : (
+            <ul className="space-y-2">
+              {citizenDocs.map(doc => (
+                <li key={doc.id} className="flex items-center justify-between gap-3 border border-gray-100 rounded-lg px-3 py-2.5 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-teal-500 shrink-0">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    <span className="text-sm text-gray-700 truncate">{doc.name}</span>
+                  </div>
+                  {doc.file_url && (
+                    <a
+                      href={doc.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 text-xs font-medium text-teal-600 hover:text-teal-800"
+                    >
+                      View
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <h2 className="font-semibold text-gray-700 text-sm mb-3 pb-2 border-b border-gray-100">Internal documents</h2>

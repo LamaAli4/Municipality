@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axiosInstance from '../lib/axios'
+import { toast } from 'react-toastify'
 import type { ComplaintPhoto } from './complaintsService'
 
 export interface AdminComplaint {
@@ -13,7 +14,9 @@ export interface AdminComplaint {
   status: string
   submitted_at: string
   created_at: string
+  updated_at: string
   photo?: ComplaintPhoto | null
+  citizen?: { full_name: string; national_id: string; phone: string }
 }
 
 export interface AdminComplaintsFilter {
@@ -40,5 +43,24 @@ export function useAdminComplaintDetail(id: string | null) {
     queryKey: ['admin-complaint', id],
     queryFn: () => axiosInstance.get(`/admin/complaints/${id}`).then(r => r.data.data),
     enabled: !!id,
+    staleTime: 0,
+  })
+}
+
+export function useResolveComplaint() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, status, result }: { id: string; status: 'UNDER_REVIEW' | 'RESOLVED' | 'CLOSED'; result?: string }) => {
+      if (status === 'UNDER_REVIEW') {
+        return axiosInstance.patch(`/admin/complaints/${id}/under-review`).then(r => r.data)
+      }
+      return axiosInstance.patch(`/admin/complaints/${id}/resolve`, { status, ...(result ? { result } : {}) }).then(r => r.data)
+    },
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ['admin-complaint', id] })
+      qc.invalidateQueries({ queryKey: ['admin-complaints'] })
+      toast.success('Complaint updated successfully')
+    },
+    onError: () => toast.error('Failed to update complaint'),
   })
 }

@@ -66,6 +66,33 @@ export function useDamageAssessmentDetail(id: string | null) {
   })
 }
 
+export interface AdminDamageAssessment extends DamageAssessment {
+  citizen?: { full_name: string; national_id: string; phone: string }
+}
+
+export function useAdminDamageAssessments(filters: { status?: string; damage_severity?: string; location?: string } = {}) {
+  return useQuery<AdminDamageAssessment[]>({
+    queryKey: ['admin', 'damage-assessments', filters],
+    queryFn: () => {
+      const params: Record<string, string> = {}
+      if (filters.status)          params.status          = filters.status
+      if (filters.damage_severity) params.damage_severity = filters.damage_severity
+      if (filters.location)        params.location        = filters.location
+      return axiosInstance.get('/admin/damage-assessments', { params }).then(r => r.data.data)
+    },
+    staleTime: 0,
+  })
+}
+
+export function useAdminDamageAssessmentDetail(id: string | null) {
+  return useQuery<AdminDamageAssessment>({
+    queryKey: ['admin', 'damage-assessment', id],
+    queryFn: () => axiosInstance.get(`/admin/damage-assessments/${id}`).then(r => r.data.data),
+    enabled: !!id,
+    staleTime: 0,
+  })
+}
+
 export function useCreateAssessment() {
   const qc = useQueryClient()
   return useMutation({
