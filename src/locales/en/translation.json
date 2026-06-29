@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "signIn": "Sign In",
+    "createAccount": "Create Account"
+  },
+  "hero": {
+    "badge": "Smart Municipality Platform",
+    "title": "Your City Services,",
+    "titleHighlight": "One Click Away",
+    "description": "Techno Amar brings all municipal services to your fingertips — submit complaints, request permits, assess property damage, and track everything from a single platform.",
+    "getStarted": "Get Started — It's Free",
+    "signIn": "Sign In"
+  },
+  "stats": {
+    "citizens": "Registered Citizens",
+    "services": "Available Services",
+    "satisfaction": "Satisfaction Rate",
+    "support": "Support Available"
+  },
+  "features": {
+    "title": "Everything You Need",
+    "subtitle": "A complete digital platform designed to make municipal services faster, simpler, and more transparent for every citizen.",
+    "complaints": {
+      "title": "Submit Complaints",
+      "desc": "Report issues in your neighborhood directly to the municipality and track their resolution in real time."
+    },
+    "services": {
+      "title": "Municipal Services",
+      "desc": "Apply for building permits, trade licenses, and more — all without leaving your home."
+    },
+    "damage": {
+      "title": "Damage Assessment",
+      "desc": "Document and report property damage with photos and get an official evaluation from the municipality."
+    },
+    "track": {
+      "title": "Track Your Requests",
+      "desc": "Stay updated on the status of every service request and complaint through your personal dashboard."
+    }
+  },
+  "cta": {
+    "title": "Ready to get started?",
+    "subtitle": "Join thousands of citizens already using Techno Amar to connect with their municipality.",
+    "button": "Create a Free Account",
+    "signIn": "Sign In"
+  },
+  "footer": {
+    "rights": "© 2026 Techno Amar Municipality Platform. All rights reserved."
+  }
+}

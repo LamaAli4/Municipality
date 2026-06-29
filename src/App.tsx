@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from
 import { useQueryClient } from '@tanstack/react-query'
 import type { Role } from './lib/types'
 import AuthPortal from './portals/AuthPortal'
+import LandingPage from './view/LandingPage'
 import AdminPortal from './portals/AdminPortal'
 import CitizenPortal from './portals/CitizenPortal'
 // import ManagerPortal from './portals/ManagerPortal'
@@ -41,7 +42,7 @@ function AppContent() {
     if (isAuthenticated && user) {
       const role = user.role.toLowerCase() as Role
       const currentPath = location.pathname
-      const authPaths = ['/login', '/register', '/forgot-password', '/otp', '/reset-password']
+      const authPaths = ['/', '/login', '/register', '/forgot-password', '/otp', '/reset-password']
       if (authPaths.includes(currentPath)) {
         if (role === 'admin') navigate('/admin', { replace: true })
         else if (role === 'citizen') navigate('/citizen', { replace: true })
@@ -73,7 +74,7 @@ function AppContent() {
       <Route path="/citizen" element={<ProtectedRoute><CitizenPortal onLogout={handleLogout} /></ProtectedRoute>} />
       {/* <Route path="/manager" element={<ProtectedRoute><ManagerPortal onLogout={handleLogout} /></ProtectedRoute>} /> */}
       <Route path="/employee" element={<ProtectedRoute><EmployeePortal onLogout={handleLogout} /></ProtectedRoute>} />
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<LandingPage />} />
     </Routes>
   )
 }

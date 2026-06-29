@@ -1,5 +1,14 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { ZodError } from 'zod'
+
+const fadeUp = {
+  hidden:  { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.4, delay: i * 0.08, ease: 'easeOut' as const },
+  }),
+}
 import { toast } from 'react-toastify'
 import Logo from '@/assets/logo.png'
 import { AuthPage } from '@/lib/types'
@@ -30,6 +39,55 @@ const CITIES = [
   { value: 'RAFAH',  label: 'Rafah' },
   { value: 'NORTH',  label: 'North' },
 ]
+
+function CitySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [])
+
+  const label = CITIES.find(c => c.value === value)?.label
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
+      >
+        <span className={label ? 'text-gray-700' : 'text-gray-400'}>{label ?? 'Select a city'}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+          className={`text-gray-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+          {CITIES.map(c => (
+            <li key={c.value}>
+              <button
+                type="button"
+                onClick={() => { onChange(c.value); setOpen(false) }}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                  c.value === value ? 'bg-teal-600 text-white font-medium' : 'text-gray-700 hover:bg-teal-50'
+                }`}
+              >
+                {c.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 async function fetchImageKitAuth(): Promise<ImageKitAuth> {
   const res = await axiosInstance.get('/auth/imagekit/upload-auth')
@@ -158,14 +216,23 @@ export default function CreateAccountPage({ navigate }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="min-h-screen flex flex-col items-center bg-white px-8 py-10">
-      <img src={Logo} alt="" />
-      <h1 className="mt-3 text-2xl font-bold">
-        <span className="text-teal-600">Thecnho </span>
-        <span className="text-gray-900">Amar</span>
-      </h1>
-      <p className="mt-1 text-sm text-gray-500 font-medium">Create a Citizen Account</p>
+      <motion.div custom={0} initial="hidden" animate="visible" variants={fadeUp} className="flex flex-col items-center">
+        <motion.img src={Logo} alt=""
+          initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }} className="h-16 w-16 object-contain"
+        />
+        <h1 className="mt-3 text-2xl font-bold">
+          <span className="text-teal-600">Thecnho </span>
+          <span className="text-gray-900">Amar</span>
+        </h1>
+        <p className="mt-1 text-sm text-gray-500 font-medium">Create a Citizen Account</p>
+      </motion.div>
 
-      <div className="mt-8 w-full max-w-3xl">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.15, ease: 'easeOut' }}
+        className="mt-8 w-full max-w-3xl"
+      >
         <div className="grid grid-cols-2 gap-x-10 gap-y-5">
 
           <Field label="Full Name" value={fields.full_name} onChange={set('full_name')} placeholder="Ahmed Al-Masri" />
@@ -194,14 +261,7 @@ export default function CreateAccountPage({ navigate }: Props) {
           <Field label="Address" value={fields.address} onChange={set('address')} placeholder="Al-Rimal, Gaza City" />
           <div>
             <label className="text-sm text-gray-500 block mb-1">City</label>
-            <select
-              value={fields.city}
-              onChange={set('city')}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-            >
-              <option value="">Select a city</option>
-              {CITIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
+            <CitySelect value={fields.city} onChange={v => setFields(prev => ({ ...prev, city: v }))} />
           </div>
 
           <UploadBox
@@ -231,16 +291,16 @@ export default function CreateAccountPage({ navigate }: Props) {
               Sign in
             </button>
           </p>
-          <button
-            type="submit"
-            disabled={isLoading}
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+            type="submit" disabled={isLoading}
             className="px-16 py-3 rounded-lg text-white text-sm font-semibold disabled:opacity-60 transition-opacity"
             style={{ background: 'linear-gradient(135deg, #0d9488, #0a7569)' }}
           >
             {btnLabel}
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
     </form>
   )
 }
