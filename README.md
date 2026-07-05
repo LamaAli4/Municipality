@@ -1,73 +1,109 @@
-# React + TypeScript + Vite
+# Municipality Portal
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack municipal services web application built with React and TypeScript. The platform serves four distinct user roles — Citizens, Employees, Department Managers, and Admins — each with a dedicated portal and workflow.
 
-Currently, two official plugins are available:
+## Live Demo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Deployed on Vercel: [https://municipality-1mqi-ev5gkl3q9-lama-alis-projects.vercel.app/](https://municipality-1mqi-ev5gkl3q9-lama-alis-projects.vercel.app/)
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Layer | Technology |
+|---|---|
+| Framework | React 18 + TypeScript |
+| Build tool | Vite |
+| Styling | Tailwind CSS |
+| Data fetching | TanStack React Query |
+| HTTP client | Axios |
+| Animations | Framer Motion |
+| Charts | Recharts |
+| Notifications | React Toastify |
+| File storage | ImageKit |
+| State | Zustand |
+| Validation | Zod |
 
-## Expanding the ESLint configuration
+## Portals & Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Citizen Portal
+- Browse and apply for municipal services with document upload
+- Payment flow: transfer number, provider (Jawwal Pay / PalPay / Bank Transfer), receipt upload
+- Track service request status and task progress
+- Submit and track complaints (with real-time status: Submitted → Under Review → Resolved / Closed)
+- View utility bills and pay online
+- Submit property damage assessments with image uploads
+- Account management and password change
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Employee Portal
+- Kanban task board (Backlog / In Progress / Completed / Failed)
+- Task detail view with citizen documents and internal document upload (PDF only)
+- Approve or reject assigned tasks
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Department Manager Portal
+- Department and section management
+- Staff management and performance overview
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Admin Portal
+- Citizens management (view, verify, enable/disable)
+- Staff management across departments and sections
+- Service management (create, publish, edit, delete)
+- Complaints management with full workflow (Start Review → Resolve / Close)
+- Damage assessments review with severity filtering
+- Dashboard with system statistics
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- npm
+
+### Installation
+
+```bash
+git clone https://github.com/LamaAli4/Municipality.git
+cd Municipality
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Environment
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Create a `.env` file in the root with your API base URL:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_API_BASE_URL=https://your-api-url.com
 ```
+
+### Development
+
+```bash
+npm run dev
+```
+
+### Production Build
+
+```bash
+npm run build
+npm run preview
+```
+
+## Project Structure
+
+```
+src/
+├── components/ui/      # Shared UI components (Button, Input, Modal, etc.)
+├── layout/             # App shell layouts (Sidebar, MainLayout, etc.)
+├── lib/                # Axios instance, types, icons, utilities
+├── portals/            # Role-based portal entry points
+├── router/             # Admin router (page-switch pattern)
+├── services/           # React Query hooks per domain
+└── view/               # Page components
+    ├── citizen/        # Citizen portal pages
+    ├── employee/       # Employee portal pages
+    ├── manager/        # Department manager pages
+    └── modals/         # Shared modal dialogs
+```
+
+## API
+
+Backend: [TechnoAmar API](https://technoamar-production.up.railway.app)
+
+Full Swagger docs available at `/api` on the backend URL.
